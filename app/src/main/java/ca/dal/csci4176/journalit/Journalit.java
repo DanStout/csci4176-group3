@@ -10,13 +10,12 @@ import timber.log.Timber;
 
 public class Journalit extends Application
 {
-
     @Override
     public void onCreate()
     {
         super.onCreate();
-        Realm.init(this);
 
+        Realm.init(this);
         AndroidThreeTen.init(this);
 
         if (BuildConfig.DEBUG)

@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity
 
         Realm realm = Realm.getDefaultInstance();
 
+        realm.executeTransaction(r -> r.deleteAll());
         realm.executeTransaction(r -> r.copyToRealm(ent));
 
         RealmResults<Entry> entries = realm
