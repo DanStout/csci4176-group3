@@ -26,11 +26,13 @@ public class MainActivity extends AppCompatActivity
         Realm realm = Realm.getDefaultInstance();
 
         realm.executeTransaction(r -> r.copyToRealm(ent));
-        RealmResults<Entry> entries = realm.where(Entry.class).findAll();
+        RealmResults<Entry> entries = realm
+                .where(Entry.class)
+                .findAll();
 
         Timber.d("Found %d entries", entries.size());
 
-        for(Entry e : entries)
+        for (Entry e : entries)
         {
             Timber.d("%s", e);
         }
