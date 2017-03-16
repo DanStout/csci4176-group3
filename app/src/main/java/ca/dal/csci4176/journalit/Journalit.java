@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
+import io.realm.BuildConfig;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import timber.log.Timber;
