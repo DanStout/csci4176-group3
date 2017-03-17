@@ -13,6 +13,8 @@ import org.threeten.bp.LocalDate;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import ca.dal.csci4176.journalit.models.BulletItem;
+import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -61,8 +63,13 @@ public class MainActivity extends AppCompatActivity
             mToday = new DailyEntry();
             mToday.setDate(LocalDate.now());
 
+            BulletItem note = new BulletItem("");
+            CheckboxItem task = new CheckboxItem("", false);
+
             realm.beginTransaction();
             mToday = realm.copyToRealm(mToday);
+            mToday.getNotes().add(note);
+            mToday.getTasks().add(task);
             realm.commitTransaction();
         }
     }

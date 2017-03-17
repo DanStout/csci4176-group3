@@ -1,57 +1,53 @@
 package ca.dal.csci4176.journalit.views;
 
 import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.EditText;
-import android.widget.RelativeLayout;
 
-import butterknife.BindView;
 import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.R;
 import ca.dal.csci4176.journalit.models.BulletItem;
+import io.realm.Realm;
 
-public class BulletItemView extends RelativeLayout
+public class BulletItemView extends BaseItemView<BulletItem>
 {
-    @BindView(R.id.bullet_item_edit)
-    EditText mEditTxt;
-
     private BulletItem mItem;
+    private Realm mRealm;
 
-    public BulletItemView(Context context)
+    public BulletItemView(Realm realm, Context context)
     {
-        super(context);
-        init();
+        super(context, R.layout.bullet_item, R.id.bullet_item_edit);
+        mRealm = realm;
     }
 
-    public BulletItemView(Context context, AttributeSet attrs)
+    protected void init()
     {
-        super(context, attrs);
-        init();
-    }
-
-    public BulletItemView(Context context, AttributeSet attrs, int defStyleAttr)
-    {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    private void init()
-    {
-        inflate(getContext(), R.layout.bullet_item, this);
         ButterKnife.bind(this);
+    }
+
+    @Override
+    protected void saveText()
+    {
+        mRealm.executeTransaction(r -> mItem.setText(mEditTxt.getText().toString()));
     }
 
     public void bindToItem(BulletItem item)
     {
-        mEditTxt.setText(item.getText());
         mItem = item;
+        updateForItem();
+        mItem.addChangeListener(element -> updateForItem());
     }
 
-    /**
-     * May only be called within a Realm transaction!
-     */
-    public void updateItem()
+    private void updateForItem()
     {
-        mItem.setText(mEditTxt.getText().toString());
+        if (!mItem.isValid())
+        {
+            return;
+        }
+
+        if (!mEditTxt.getText().toString().equals(mItem.getText()))
+        {
+            callingSetText = true;
+            mEditTxt.setText(mItem.getText());
+            callingSetText = false;
+        }
     }
 }

@@ -2,51 +2,42 @@ package ca.dal.csci4176.journalit.views;
 
 import android.content.Context;
 import android.graphics.Paint;
-import android.support.annotation.Nullable;
-import android.util.AttributeSet;
 import android.widget.CheckBox;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.R;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
+import io.realm.Realm;
 
-public class CheckboxItemView extends LinearLayout
+public class CheckboxItemView extends BaseItemView<CheckboxItem>
 {
-    @BindView(R.id.checkbox_item_edit)
-    EditText mEditTxt;
-
     @BindView(R.id.checkbox_item_checkbox)
     CheckBox mCheck;
 
     private CheckboxItem mItem;
+    private Realm mRealm;
 
-    public CheckboxItemView(Context context)
+    public CheckboxItemView(Realm realm, Context context)
     {
-        super(context);
-        init();
+        super(context, R.layout.checkbox_item, R.id.checkbox_item_edit);
+        mRealm = realm;
     }
 
-    public CheckboxItemView(Context context, @Nullable AttributeSet attrs)
+    protected void init()
     {
-        super(context, attrs);
-        init();
-    }
-
-    public CheckboxItemView(Context context, @Nullable AttributeSet attrs, int defStyleAttr)
-    {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    private void init()
-    {
-        inflate(getContext(), R.layout.checkbox_item, this);
         ButterKnife.bind(this);
+        mCheck.setOnCheckedChangeListener((buttonView, isChecked) ->
+        {
+            mRealm.executeTransaction(r -> mItem.setChecked(isChecked));
+            updateStrikethrough(isChecked);
+        });
+    }
 
-        mCheck.setOnCheckedChangeListener((buttonView, isChecked) -> updateStrikethrough(isChecked));
+    @Override
+    protected void saveText()
+    {
+        mRealm.executeTransaction(r -> mItem.setText(mEditTxt.getText().toString()));
     }
 
     private void updateStrikethrough(boolean isChecked)
@@ -66,18 +57,27 @@ public class CheckboxItemView extends LinearLayout
 
     public void bindToItem(CheckboxItem item)
     {
-        mCheck.setChecked(item.isChecked());
-        mEditTxt.setText(item.getText());
-        updateStrikethrough(item.isChecked());
         mItem = item;
+        updateForItem();
+        mItem.addChangeListener(element -> updateForItem());
     }
 
-    /**
-     * May only be called within a Realm transaction!
-     */
-    public void updateItem()
+    private void updateForItem()
     {
-        mItem.setChecked(mCheck.isChecked());
-        mItem.setText(mEditTxt.getText().toString());
+        if (!mItem.isValid())
+        {
+            return;
+        }
+
+        mCheck.setChecked(mItem.isChecked());
+
+        if (!mEditTxt.getText().toString().equals(mItem.getText()))
+        {
+            callingSetText = true;
+            mEditTxt.setText(mItem.getText());
+            callingSetText = false;
+        }
+
+        updateStrikethrough(mItem.isChecked());
     }
 }

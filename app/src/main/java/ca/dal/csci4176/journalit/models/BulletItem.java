@@ -4,6 +4,8 @@ import io.realm.RealmObject;
 
 public class BulletItem extends RealmObject
 {
+    private String text;
+
     public BulletItem(String text)
     {
         setText(text);
@@ -16,8 +18,6 @@ public class BulletItem extends RealmObject
     {
 
     }
-
-    private String text;
 
     public String getText()
     {
