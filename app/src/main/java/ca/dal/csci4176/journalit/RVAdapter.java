@@ -1,5 +1,6 @@
 package ca.dal.csci4176.journalit;
 
+import android.content.Context;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -8,61 +9,78 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.List;
+import ca.dal.csci4176.journalit.models.DailyEntry;
+import io.realm.OrderedRealmCollection;
+import io.realm.RealmRecyclerViewAdapter;
 
-/**
- * Created by WZ on 2017/3/16.
- */
+public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.CardViewHolder>
+{
+    private Context mCtx;
 
-public class RVAdapter extends RecyclerView.Adapter<RVAdapter.CardViewHolder>{
-    public static class CardViewHolder extends RecyclerView.ViewHolder {
+    public class CardViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
+    {
         CardView cv;
-        TextView Date;
-        TextView Note1;
-        TextView Note2;
-        ImageView Picture;
+        TextView date;
+        TextView note1;
+        TextView note2;
+        ImageView picture;
 
-        CardViewHolder(View itemView) {
+        private DailyEntry entry;
+
+        CardViewHolder(View itemView)
+        {
             super(itemView);
-            cv = (CardView)itemView.findViewById(R.id.card_view);
-            Date = (TextView)itemView.findViewById(R.id.date);
-            Note1 = (TextView)itemView.findViewById(R.id.note1);
-            Note2 = (TextView)itemView.findViewById(R.id.note2);
-            Picture = (ImageView)itemView.findViewById(R.id.picture);
+            itemView.setOnClickListener(this);
+
+            cv = (CardView) itemView.findViewById(R.id.card_view);
+            date = (TextView) itemView.findViewById(R.id.date);
+            note1 = (TextView) itemView.findViewById(R.id.note1);
+            note2 = (TextView) itemView.findViewById(R.id.note2);
+            picture = (ImageView) itemView.findViewById(R.id.picture);
+        }
+
+        void bindToEntry(DailyEntry entry)
+        {
+            date.setText(entry.getDateFormatted());
+            note1.setText(entry.getText());
+            note2.setText("Second Line Here");
+            picture.setImageResource(R.mipmap.ic_launcher);
+
+            this.entry = entry;
+        }
+
+        @Override
+        public void onClick(View v)
+        {
+            mCtx.startActivity(DailyEntryActivity.getIntent(mCtx, entry.getKey()));
         }
     }
 
-    List<Card> cards;
 
-    public RVAdapter(List<Card> cards){
-        this.cards = cards;
+    RVAdapter(Context context, OrderedRealmCollection<DailyEntry> entries)
+    {
+        super(entries, true);
+        mCtx = context;
     }
 
     @Override
-    public int getItemCount() {
-        return cards.size();
+    public CardViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
+    {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card, parent, false);
+        CardViewHolder hold = new CardViewHolder(v);
+        return hold;
     }
 
     @Override
-    public CardViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.card, viewGroup, false);
-        CardViewHolder pvh = new CardViewHolder(v);
-        return pvh;
+    public void onBindViewHolder(CardViewHolder holder, int position)
+    {
+        DailyEntry ent = getItem(position);
+        holder.bindToEntry(ent);
     }
 
     @Override
-    public void onBindViewHolder(CardViewHolder cardViewHolder, int i) {
-        cardViewHolder.Date.setText(cards.get(i).date);
-        cardViewHolder.Note1.setText(cards.get(i).note1);
-        cardViewHolder.Note2.setText(cards.get(i).note2);
-        cardViewHolder.Picture.setImageResource(cards.get(i).photoId);
-    }
-
-    @Override
-    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    public void onAttachedToRecyclerView(RecyclerView recyclerView)
+    {
         super.onAttachedToRecyclerView(recyclerView);
     }
-
-
-
 }

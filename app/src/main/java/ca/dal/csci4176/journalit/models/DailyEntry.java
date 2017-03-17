@@ -3,6 +3,7 @@ package ca.dal.csci4176.journalit.models;
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.ZoneId;
+import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.Date;
 
@@ -10,8 +11,10 @@ import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.Required;
 
-public class Entry extends RealmObject
+public class DailyEntry extends RealmObject
 {
+    private static DateTimeFormatter sDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
     @Required
     private Date date;
 
@@ -23,6 +26,11 @@ public class Entry extends RealmObject
     public LocalDate getDate()
     {
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+    }
+
+    public String getDateFormatted()
+    {
+        return getDate().format(sDateFormat);
     }
 
     public long getKey()
@@ -49,7 +57,7 @@ public class Entry extends RealmObject
     @Override
     public String toString()
     {
-        return "Entry{" +
+        return "DailyEntry{" +
                 "date=" + date +
                 ", text='" + text + '\'' +
                 '}';
