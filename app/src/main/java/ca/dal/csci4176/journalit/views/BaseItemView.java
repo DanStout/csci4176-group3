@@ -50,6 +50,7 @@ public abstract class BaseItemView<T extends RealmObject> extends RelativeLayout
 
         mEditTxt.setOnKeyListener((v, keyCode, event) ->
         {
+            Timber.d("Key Pressed: %d", keyCode);
             if (event.getAction() == KeyEvent.ACTION_DOWN)
             {
                 switch (keyCode)

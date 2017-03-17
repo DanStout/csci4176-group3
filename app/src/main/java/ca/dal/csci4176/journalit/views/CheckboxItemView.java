@@ -37,6 +37,11 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
     @Override
     protected void saveText()
     {
+        if (!mItem.isValid())
+        {
+            return;
+        }
+
         mRealm.executeTransaction(r -> mItem.setText(mEditTxt.getText().toString()));
     }
 
