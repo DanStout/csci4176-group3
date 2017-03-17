@@ -12,14 +12,14 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="8dp"
         >
 
         <TextView
             android:id="@+id/date"
             android:layout_width="match_parent"
-            android:layout_height="20dp"
-            android:layout_marginLeft="5dp"
-            android:gravity="center_vertical"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
             android:textSize="18sp"
             tools:text="Date"
             />
@@ -29,11 +29,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/date"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
-            tools:text="First Line"
             android:textSize="14sp"
+            tools:text="First Line"
             />
 
         <TextView
@@ -41,22 +39,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/note1"
-            android:layout_marginLeft="5dp"
-            android:layout_marginTop="10dp"
             android:gravity="center_vertical"
-            tools:text="Second Line"
             android:textSize="14sp"
+            tools:text="Second Line"
             />
 
         <ImageView
             android:id="@+id/picture"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_alignRight="@+id/date"
-            android:layout_marginLeft="270dp"
-            android:layout_marginTop="10dp"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
             android:src="@mipmap/ic_launcher"
             />
 

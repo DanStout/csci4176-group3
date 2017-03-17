@@ -6,18 +6,21 @@
     tools:context=".MainActivity"
     >
 
-    <item android:id="@+id/action_edit"
-        android:title="Edit"
-        android:orderInCategory="80"
-        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_edit"
+        android:title="@string/menu_edit"
+        app:showAsAction="never"
+        />
 
-    <item android:id="@+id/action_share"
-        android:orderInCategory="90"
-        android:title="Share"
-        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_share"
+        android:title="@string/menu_share"
+        app:showAsAction="never"
+        />
 
-    <item android:id="@+id/action_settings"
-        android:title="Setting"
-        android:orderInCategory="100"
-        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_settings"
+        android:title="@string/menu_settings"
+        app:showAsAction="never"
+        />
 </menu>

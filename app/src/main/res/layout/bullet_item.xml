@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    tools:parentTag="RelativeLayout"
+    >
+
+    <ImageView
+        android:id="@+id/bullet_imgview"
+        android:layout_width="12dp"
+        android:layout_height="12dp"
+        android:src="@drawable/ic_circle"
+        android:layout_marginRight="8dp"
+        android:layout_centerVertical="true"
+        />
+
+    <EditText
+        android:id="@+id/bullet_item_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/bullet_imgview"
+        tools:text="Hello!"
+
+        />
+</merge>

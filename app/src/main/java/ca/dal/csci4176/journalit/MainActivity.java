@@ -8,8 +8,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
+import org.threeten.bp.LocalDate;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -17,30 +20,56 @@ import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
 {
-    FloatingActionButton fab;
+    @BindView(R.id.main_fab)
+    FloatingActionButton mFab;
+
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
+
+    @BindView(R.id.main_entry_list)
+    RecyclerView mRecycler;
+
+    private DailyEntry mToday;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar(mToolbar);
 
-
-        RecyclerView rv = (RecyclerView) findViewById(R.id.cardList);
-        rv.setHasFixedSize(true);
+        mRecycler.setHasFixedSize(true);
         LinearLayoutManager llm = new LinearLayoutManager(this);
-        rv.setLayoutManager(llm);
+        mRecycler.setLayoutManager(llm);
 
-        fab = (FloatingActionButton) findViewById(R.id.fab);
-
-        fab.setOnClickListener(v -> Toast.makeText(MainActivity.this, "hi", Toast.LENGTH_SHORT).show());
+        mFab.setOnClickListener(v -> openTodayEntry());
 
         Realm realm = Realm.getDefaultInstance();
         RealmResults<DailyEntry> entries = realm.where(DailyEntry.class).findAll();
         RVAdapter adapter = new RVAdapter(this, entries);
-        rv.setAdapter(adapter);
+        mRecycler.setAdapter(adapter);
+
+        mToday = realm
+                .where(DailyEntry.class)
+                .equalTo("key", DailyEntry.getKeyOfToday())
+                .findFirst();
+
+        if (mToday == null)
+        {
+            mToday = new DailyEntry();
+            mToday.setDate(LocalDate.now());
+
+            realm.beginTransaction();
+            mToday = realm.copyToRealm(mToday);
+            realm.commitTransaction();
+        }
+    }
+
+    private void openTodayEntry()
+    {
+        startActivity(DailyEntryActivity.getIntent(this, mToday));
     }
 
     @Override
@@ -48,13 +77,13 @@ public class MainActivity extends AppCompatActivity
     {
         switch (item.getItemId())
         {
-            case R.id.action_edit:
+            case R.id.menu_edit:
                 Timber.d("Edit");
                 break;
-            case R.id.action_share:
+            case R.id.menu_share:
                 Timber.d("Share");
                 break;
-            case R.id.action_settings:
+            case R.id.menu_settings:
                 Timber.d("Settings");
                 break;
         }

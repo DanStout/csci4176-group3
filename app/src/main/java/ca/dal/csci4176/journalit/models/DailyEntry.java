@@ -1,12 +1,12 @@
 package ca.dal.csci4176.journalit.models;
 
-import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDate;
-import org.threeten.bp.ZoneId;
 import org.threeten.bp.format.DateTimeFormatter;
 
 import java.util.Date;
 
+import ca.dal.csci4176.journalit.utils.DateUtils;
+import io.realm.RealmList;
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.Required;
@@ -23,9 +23,35 @@ public class DailyEntry extends RealmObject
 
     private String text;
 
+    private RealmList<BulletItem> notes;
+
+    private RealmList<CheckboxItem> tasks;
+
+    public static long getKeyOfToday()
+    {
+        LocalDate now = LocalDate.now();
+        Date nowDate = DateUtils.toDate(now);
+        return getKey(nowDate);
+    }
+
+    private static long getKey(Date date)
+    {
+        return date.getTime();
+    }
+
+    public RealmList<BulletItem> getNotes()
+    {
+        return notes;
+    }
+
+    public RealmList<CheckboxItem> getTasks()
+    {
+        return tasks;
+    }
+
     public LocalDate getDate()
     {
-        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
+        return DateUtils.toLocalDate(date);
     }
 
     public String getDateFormatted()
@@ -40,8 +66,8 @@ public class DailyEntry extends RealmObject
 
     public void setDate(LocalDate date)
     {
-        this.date = new Date(date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
-        this.key = this.date.getTime();
+        this.date = DateUtils.toDate(date);
+        this.key = getKey(this.date);
     }
 
     public String getText()
@@ -59,7 +85,10 @@ public class DailyEntry extends RealmObject
     {
         return "DailyEntry{" +
                 "date=" + date +
+                ", key=" + key +
                 ", text='" + text + '\'' +
+                ", notes=" + notes +
+                ", tasks=" + tasks +
                 '}';
     }
 }

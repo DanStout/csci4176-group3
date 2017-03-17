@@ -9,8 +9,12 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import io.realm.OrderedRealmCollection;
+import io.realm.RealmList;
 import io.realm.RealmRecyclerViewAdapter;
 
 public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.CardViewHolder>
@@ -19,10 +23,19 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
 
     public class CardViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener
     {
+        @BindView(R.id.card_view)
         CardView cv;
+
+        @BindView(R.id.date)
         TextView date;
+
+        @BindView(R.id.note1)
         TextView note1;
+
+        @BindView(R.id.note2)
         TextView note2;
+
+        @BindView(R.id.picture)
         ImageView picture;
 
         private DailyEntry entry;
@@ -31,31 +44,34 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
         {
             super(itemView);
             itemView.setOnClickListener(this);
-
-            cv = (CardView) itemView.findViewById(R.id.card_view);
-            date = (TextView) itemView.findViewById(R.id.date);
-            note1 = (TextView) itemView.findViewById(R.id.note1);
-            note2 = (TextView) itemView.findViewById(R.id.note2);
-            picture = (ImageView) itemView.findViewById(R.id.picture);
+            ButterKnife.bind(this, itemView);
         }
 
         void bindToEntry(DailyEntry entry)
         {
             date.setText(entry.getDateFormatted());
-            note1.setText(entry.getText());
-            note2.setText("Second Line Here");
-            picture.setImageResource(R.mipmap.ic_launcher);
 
+            RealmList<BulletItem> notes = entry.getNotes();
+            if (notes.size() > 0)
+            {
+                note1.setText(notes.get(0).getText());
+
+                if (notes.size() > 1)
+                {
+                    note2.setText(notes.get(1).getText());
+                }
+            }
+
+            picture.setImageResource(R.mipmap.ic_launcher);
             this.entry = entry;
         }
 
         @Override
         public void onClick(View v)
         {
-            mCtx.startActivity(DailyEntryActivity.getIntent(mCtx, entry.getKey()));
+            mCtx.startActivity(DailyEntryActivity.getIntent(mCtx, entry));
         }
     }
-
 
     RVAdapter(Context context, OrderedRealmCollection<DailyEntry> entries)
     {
@@ -67,8 +83,7 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
     public CardViewHolder onCreateViewHolder(ViewGroup parent, int viewType)
     {
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.card, parent, false);
-        CardViewHolder hold = new CardViewHolder(v);
-        return hold;
+        return new CardViewHolder(v);
     }
 
     @Override
