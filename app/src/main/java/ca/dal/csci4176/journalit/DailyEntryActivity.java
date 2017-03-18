@@ -68,109 +68,146 @@ public class DailyEntryActivity extends AppCompatActivity
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
 
-        for (BulletItem item : mEntry.getNotes())
+        mEntry.getNotes().addChangeListener((col, changeSet) ->
         {
-            BulletItemView bul = new BulletItemView(mRealm, this);
-            bul.bindToItem(item);
-            mNoteCont.addView(bul);
+            int[] inserts = changeSet.getInsertions();
 
-            bul.setEnterListener((selectionStart) -> handleBulletItemEnter(item, selectionStart));
-            bul.setDeleteListener(() ->
+            for (int pos : inserts)
             {
-                if (mNoteCont.indexOfChild(bul) > 0)
-                {
-                    mNoteCont.removeView(bul);
-                    mRealm.executeTransaction(r -> item.deleteFromRealm());
-                }
-            });
+                BulletItem item = col.get(pos);
+                addBulletItem(item, pos, true);
+            }
+
+            int[] deletes = changeSet.getDeletions();
+            for (int pos : deletes)
+            {
+                mNoteCont.removeViewAt(pos);
+                int next = pos == 0 ? pos + 1 : pos - 1;
+                mNoteCont.getChildAt(next).requestFocus();
+            }
+        });
+
+        for (int i = 0; i < mEntry.getNotes().size(); i++)
+        {
+            BulletItem item = mEntry.getNotes().get(i);
+            addBulletItem(item, i, false);
         }
 
-        for (CheckboxItem item : mEntry.getTasks())
+        mEntry.getTasks().addChangeListener((col, changeSet) ->
         {
-            CheckboxItemView chk = new CheckboxItemView(mRealm, this);
-            chk.bindToItem(item);
-            mTaskCont.addView(chk);
-
-            chk.setEnterListener((selStart -> handleCheckboxItemEnter(item, selStart)));
-            chk.setDeleteListener(() ->
+            int[] inserts = changeSet.getInsertions();
+            for (int pos : inserts)
             {
-                if (mTaskCont.indexOfChild(chk) > 0)
-                {
-                    mTaskCont.removeView(chk);
-                    mRealm.executeTransaction(r -> item.deleteFromRealm());
-                }
-            });
+                CheckboxItem item = col.get(pos);
+                addCheckboxItem(item, pos, true);
+            }
+
+            int[] deletes = changeSet.getDeletions();
+            for (int pos : deletes)
+            {
+                mTaskCont.removeViewAt(pos);
+                int next = pos == 0 ? pos + 1 : pos - 1;
+                mTaskCont.getChildAt(next).requestFocus();
+            }
+        });
+
+        for (int i = 0; i < mEntry.getTasks().size(); i++)
+        {
+            CheckboxItem item = mEntry.getTasks().get(i);
+            addCheckboxItem(item, i, false);
         }
     }
 
-    private void handleCheckboxItemEnter(CheckboxItem item, int selStart)
+    private void addCheckboxItem(CheckboxItem item, int pos, boolean doFocus)
     {
-        Timber.d("Enter pressed in checkbox item with selection start %d", selStart);
-
-        String fullText = item.getText();
-        String newText = fullText.substring(0, selStart);
-        String selText = fullText.substring(selStart);
-
-        int loc = mEntry.getTasks().indexOf(item) + 1;
-
-        mRealm.beginTransaction();
-
-        item.setText(newText);
-        CheckboxItem newItem = mRealm.createObject(CheckboxItem.class);
-        newItem.setText(selText);
-        mEntry.getTasks().add(loc, newItem);
-
-        mRealm.commitTransaction();
-
-        CheckboxItemView newBul = new CheckboxItemView(mRealm, this);
-        newBul.bindToItem(newItem);
-        mTaskCont.addView(newBul, loc);
-        newBul.requestFocus();
-
-        newBul.setEnterListener(sel -> handleCheckboxItemEnter(newItem, sel));
-
-        newBul.setDeleteListener(() ->
+        CheckboxItemView bul = new CheckboxItemView(mRealm, this);
+        bul.bindToItem(item);
+        mTaskCont.addView(bul, pos);
+        if (doFocus)
         {
-            if (mTaskCont.indexOfChild(newBul) > 0)
+            bul.requestFocus();
+        }
+
+        bul.setEnterListener(selectionStart ->
+        {
+            Timber.d("Enter pressed in checkbox item with selection start %d", selectionStart);
+
+            String fullText = item.getText();
+            String newText = fullText.substring(0, selectionStart);
+            String selText = fullText.substring(selectionStart);
+
+            int loc = mEntry.getTasks().indexOf(item) + 1;
+
+            mRealm.beginTransaction();
+            item.setText(newText);
+            CheckboxItem newItem = mRealm.createObject(CheckboxItem.class);
+            newItem.setText(selText);
+            mEntry.getTasks().add(loc, newItem);
+            mRealm.commitTransaction();
+        });
+
+        bul.setDeleteListener(() ->
+        {
+            int idx = mEntry.getTasks().indexOf(item);
+            if (idx > 0)
             {
-                mTaskCont.removeView(newBul);
-                mRealm.executeTransaction(r -> item.deleteFromRealm());
+                CheckboxItem prev = mEntry.getTasks().get(idx - 1);
+                String ptxt = prev.getText();
+                String itxt = item.getText();
+                String result = ptxt.isEmpty() ? itxt : itxt.isEmpty() ? ptxt : ptxt + " " + itxt;
+
+                mRealm.executeTransaction(r ->
+                {
+                    prev.setText(result);
+                    item.deleteFromRealm();
+                });
             }
         });
     }
 
-    private void handleBulletItemEnter(BulletItem item, int selectionStart)
+    private void addBulletItem(BulletItem item, int position, boolean doFocus)
     {
-        Timber.d("Enter pressed in bullet item with selection start %d", selectionStart);
-
-        String fullText = item.getText();
-        String newText = fullText.substring(0, selectionStart);
-        String selText = fullText.substring(selectionStart);
-
-        int loc = mEntry.getNotes().indexOf(item) + 1;
-
-        mRealm.beginTransaction();
-
-        item.setText(newText);
-        BulletItem newItem = mRealm.createObject(BulletItem.class);
-        newItem.setText(selText);
-        mEntry.getNotes().add(loc, newItem);
-
-        mRealm.commitTransaction();
-
-        BulletItemView newBul = new BulletItemView(mRealm, this);
-        newBul.bindToItem(newItem);
-        mNoteCont.addView(newBul, loc);
-        newBul.requestFocus();
-
-        newBul.setEnterListener(sel -> handleBulletItemEnter(newItem, sel));
-
-        newBul.setDeleteListener(() ->
+        BulletItemView bul = new BulletItemView(mRealm, this);
+        bul.bindToItem(item);
+        mNoteCont.addView(bul, position);
+        if (doFocus)
         {
-            if (mNoteCont.indexOfChild(newBul) > 0)
+            bul.requestFocus();
+        }
+
+        bul.setEnterListener(selectionStart ->
+        {
+            Timber.d("Enter pressed in bullet item with selection start %d", selectionStart);
+
+            String fullText = item.getText();
+            String newText = fullText.substring(0, selectionStart);
+            String selText = fullText.substring(selectionStart);
+
+            int loc = mEntry.getNotes().indexOf(item) + 1;
+
+            mRealm.beginTransaction();
+            item.setText(newText);
+            BulletItem newItem = mRealm.createObject(BulletItem.class);
+            newItem.setText(selText);
+            mEntry.getNotes().add(loc, newItem);
+            mRealm.commitTransaction();
+        });
+
+        bul.setDeleteListener(() ->
+        {
+            int idx = mEntry.getNotes().indexOf(item);
+            if (idx > 0)
             {
-                mNoteCont.removeView(newBul);
-                mRealm.executeTransaction(r -> item.deleteFromRealm());
+                BulletItem prev = mEntry.getNotes().get(idx - 1);
+                String ptxt = prev.getText();
+                String itxt = item.getText();
+                String result = ptxt.isEmpty() ? itxt : itxt.isEmpty() ? ptxt : ptxt + " " + itxt;
+
+                mRealm.executeTransaction(r ->
+                {
+                    prev.setText(result);
+                    item.deleteFromRealm();
+                });
             }
         });
     }

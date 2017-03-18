@@ -18,6 +18,7 @@ import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import io.realm.Realm;
 import io.realm.RealmResults;
+import io.realm.Sort;
 import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
@@ -49,7 +50,11 @@ public class MainActivity extends AppCompatActivity
         mFab.setOnClickListener(v -> openTodayEntry());
 
         Realm realm = Realm.getDefaultInstance();
-        RealmResults<DailyEntry> entries = realm.where(DailyEntry.class).findAll();
+
+        RealmResults<DailyEntry> entries = realm
+                .where(DailyEntry.class)
+                .findAllSorted("key", Sort.DESCENDING);
+
         RVAdapter adapter = new RVAdapter(this, entries);
         mRecycler.setAdapter(adapter);
 

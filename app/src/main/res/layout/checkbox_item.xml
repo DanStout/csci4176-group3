@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="8dp"
-        android:layout_centerVertical="true"
+        android:layout_marginTop="8dp"
         />
 
     <EditText
@@ -20,7 +20,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/checkbox_item_checkbox"
-        android:inputType="text"
+        android:inputType="textMultiLine|textCapSentences"
         tools:text="Hello!"
         />
 </merge>

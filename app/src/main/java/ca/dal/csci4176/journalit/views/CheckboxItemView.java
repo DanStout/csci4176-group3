@@ -2,6 +2,7 @@ package ca.dal.csci4176.journalit.views;
 
 import android.content.Context;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.widget.CheckBox;
 
 import butterknife.BindView;
@@ -84,5 +85,12 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
         }
 
         updateStrikethrough(mItem.isChecked());
+    }
+
+    @Override
+    protected boolean onRequestFocusInDescendants(int direction, Rect previouslyFocusedRect)
+    {
+        mEditTxt.requestFocus();
+        return true;
     }
 }

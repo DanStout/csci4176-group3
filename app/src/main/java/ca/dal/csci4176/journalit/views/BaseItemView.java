@@ -27,7 +27,7 @@ public abstract class BaseItemView<T extends RealmObject> extends RelativeLayout
 
     public interface DeleteListener
     {
-        void onDeleteWhileEmpty();
+        void onDeleteAtStart();
     }
 
     public void setDeleteListener(DeleteListener listener)
@@ -48,30 +48,17 @@ public abstract class BaseItemView<T extends RealmObject> extends RelativeLayout
 
         mEditTxt = (EditText) findViewById(editTextRes);
 
+        /*
+         * Potential issue: the keylistener appears to not be called for some virtual keyboards?
+         */
         mEditTxt.setOnKeyListener((v, keyCode, event) ->
         {
             Timber.d("Key Pressed: %d", keyCode);
-            if (event.getAction() == KeyEvent.ACTION_DOWN)
+            if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DEL &&
+                    mDeleteListener != null && mEditTxt.getSelectionStart() == 0)
             {
-                switch (keyCode)
-                {
-                    case KeyEvent.KEYCODE_ENTER:
-                        if (mEnterListener != null)
-                        {
-                            saveText();
-                            mEnterListener.onEnterPressed(mEditTxt.getSelectionStart());
-                        }
-                        return true;
-                    case KeyEvent.KEYCODE_DEL:
-                        if (mDeleteListener != null && mEditTxt.getText().length() == 0)
-                        {
-                            mDeleteListener.onDeleteWhileEmpty();
-                            return true;
-                        }
-                        return false;
-                    default:
-                        return false;
-                }
+                mDeleteListener.onDeleteAtStart();
+                return true;
             }
             return false;
         });
@@ -87,13 +74,23 @@ public abstract class BaseItemView<T extends RealmObject> extends RelativeLayout
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count)
             {
-
             }
 
             @Override
             public void afterTextChanged(Editable s)
             {
                 Timber.d("Text changed to: %s", s.toString());
+                int i = s.toString().indexOf('\n');
+                if (i != -1)
+                {
+                    s.delete(i, i + 1);
+                    if (mEnterListener != null)
+                    {
+                        saveText();
+                        mEnterListener.onEnterPressed(mEditTxt.getSelectionStart());
+                        return;
+                    }
+                }
 
                 if (!callingSetText)
                 {
