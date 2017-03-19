@@ -2,13 +2,18 @@ package ca.dal.csci4176.journalit;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
@@ -20,6 +25,7 @@ import timber.log.Timber;
 public class DailyEntryActivity extends AppCompatActivity
 {
     private static final String EXTRA_ENTRY_ID = "entry_id";
+    private static final int REQ_TAKE_PHOTO = 1;
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -29,6 +35,22 @@ public class DailyEntryActivity extends AppCompatActivity
 
     @BindView(R.id.entry_tasks_container)
     LinearLayout mTaskCont;
+
+    @BindView(R.id.entry_no_photo_container)
+    LinearLayout mNoPhotoCont;
+
+    @BindView(R.id.entry_photo)
+    ImageView mPhoto;
+
+    @OnClick(R.id.entry_no_photo_container)
+    public void takePhoto()
+    {
+        Intent in = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (in.resolveActivity(getPackageManager()) != null)
+        {
+            startActivityForResult(in, REQ_TAKE_PHOTO);
+        }
+    }
 
     private DailyEntry mEntry;
 
@@ -210,6 +232,19 @@ public class DailyEntryActivity extends AppCompatActivity
                 });
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK)
+        {
+            Bitmap img = (Bitmap) data.getExtras().get("data");
+            mPhoto.setImageBitmap(img);
+
+            mNoPhotoCont.setVisibility(View.GONE);
+            mPhoto.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

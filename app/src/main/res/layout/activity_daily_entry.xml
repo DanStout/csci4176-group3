@@ -22,11 +22,11 @@
             >
 
             <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/entry_section_notes"
-            android:textStyle="bold"
-            />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/entry_section_notes"
+                android:textStyle="bold"
+                />
 
             <LinearLayout
                 android:id="@+id/entry_notes_container"
@@ -48,6 +48,43 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                >
+
+                <LinearLayout
+                    android:id="@+id/entry_no_photo_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/darker_gray"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    >
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/entry_no_photo"
+                        />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_camera"
+                        />
+
+                </LinearLayout>
+
+                <ImageView
+                    android:id="@+id/entry_photo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    />
+
+            </FrameLayout>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

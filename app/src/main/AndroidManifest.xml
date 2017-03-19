@@ -3,6 +3,8 @@
     package="ca.dal.csci4176.journalit"
     >
 
+    <uses-feature android:name="android.hardware.camera" android:required="true"/>
+
     <application
         android:name=".Journalit"
         android:allowBackup="true"
