@@ -21,7 +21,7 @@ public class DailyEntry extends RealmObject
     @PrimaryKey
     private long key;
 
-    private String text;
+    private String photoPath;
 
     private RealmList<BulletItem> notes;
 
@@ -42,6 +42,16 @@ public class DailyEntry extends RealmObject
     public RealmList<BulletItem> getNotes()
     {
         return notes;
+    }
+
+    public String getPhotoPath()
+    {
+        return photoPath;
+    }
+
+    public void setPhotoPath(String photoPath)
+    {
+        this.photoPath = photoPath;
     }
 
     public RealmList<CheckboxItem> getTasks()
@@ -70,23 +80,12 @@ public class DailyEntry extends RealmObject
         this.key = getKey(this.date);
     }
 
-    public String getText()
-    {
-        return text;
-    }
-
-    public void setText(String text)
-    {
-        this.text = text;
-    }
-
     @Override
     public String toString()
     {
         return "DailyEntry{" +
                 "date=" + date +
                 ", key=" + key +
-                ", text='" + text + '\'' +
                 ", notes=" + notes +
                 ", tasks=" + tasks +
                 '}';

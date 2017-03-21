@@ -3,7 +3,10 @@
     package="ca.dal.csci4176.journalit"
     >
 
-    <uses-feature android:name="android.hardware.camera" android:required="true"/>
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true"
+        />
 
     <application
         android:name=".Journalit"
@@ -23,11 +26,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- windowSoftInputMode="stateHidden" prevents keyboard from opening when activity is launched -->
         <activity
             android:name=".DailyEntryActivity"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="stateHidden"
             />
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="ca.dal.csci4176.journalit.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true"
+            >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"
+                />
+
+        </provider>
     </application>
 
 </manifest>

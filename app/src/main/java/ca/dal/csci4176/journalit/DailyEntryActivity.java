@@ -1,15 +1,27 @@
 package ca.dal.csci4176.journalit;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
+
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.format.DateTimeFormatter;
+
+import java.io.File;
+import java.io.IOException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -24,6 +36,8 @@ import timber.log.Timber;
 
 public class DailyEntryActivity extends AppCompatActivity
 {
+    private DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
+
     private static final String EXTRA_ENTRY_ID = "entry_id";
     private static final int REQ_TAKE_PHOTO = 1;
 
@@ -46,6 +60,23 @@ public class DailyEntryActivity extends AppCompatActivity
     public void takePhoto()
     {
         Intent in = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        try
+        {
+            mFile = createImageFile();
+        }
+        catch (IOException e)
+        {
+            Timber.w(e, "Failed to create temp image file");
+            Toast.makeText(this, R.string.photo_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Uri imgUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", mFile);
+        in.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
+        ClipData clip = ClipData.newUri(getContentResolver(), "Photo", imgUri);
+        in.setClipData(clip);
+        in.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
         if (in.resolveActivity(getPackageManager()) != null)
         {
             startActivityForResult(in, REQ_TAKE_PHOTO);
@@ -55,6 +86,15 @@ public class DailyEntryActivity extends AppCompatActivity
     private DailyEntry mEntry;
 
     private Realm mRealm;
+
+    private File mFile;
+
+    private File createImageFile() throws IOException
+    {
+        String imgName = "img_"+ LocalDateTime.now().format(mImgFileNameDateFormat) + "_";
+        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return File.createTempFile(imgName, ".jpg", dir);
+    }
 
     public static Intent getIntent(Context ctx, DailyEntry entry)
     {
@@ -239,8 +279,12 @@ public class DailyEntryActivity extends AppCompatActivity
     {
         if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK)
         {
-            Bitmap img = (Bitmap) data.getExtras().get("data");
+//            Bitmap img = (Bitmap) data.getExtras().get("data");
+            Timber.d("File path: %s", mFile.getPath());
+            Bitmap img = BitmapFactory.decodeFile(mFile.getPath());
             mPhoto.setImageBitmap(img);
+
+            mRealm.executeTransaction(r -> mEntry.setPhotoPath(mFile.getPath()));
 
             mNoPhotoCont.setVisibility(View.GONE);
             mPhoto.setVisibility(View.VISIBLE);

@@ -1,6 +1,9 @@
 package ca.dal.csci4176.journalit;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.ThumbnailUtils;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -61,9 +64,24 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
                     note2.setText(notes.get(1).getText());
                 }
             }
+            setPhoto(entry.getPhotoPath());
 
-            picture.setImageResource(R.mipmap.ic_launcher);
             this.entry = entry;
+        }
+
+        private void setPhoto(String path)
+        {
+            if (path != null)
+            {
+                Bitmap full = BitmapFactory.decodeFile(path);
+                if (full != null)
+                {
+                    Bitmap thumb = ThumbnailUtils.extractThumbnail(full, 100, 100);
+                    picture.setImageBitmap(thumb);
+                    return;
+                }
+            }
+            picture.setImageResource(R.mipmap.ic_launcher);
         }
 
         @Override
@@ -72,6 +90,7 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
             mCtx.startActivity(DailyEntryActivity.getIntent(mCtx, entry));
         }
     }
+
 
     RVAdapter(Context context, OrderedRealmCollection<DailyEntry> entries)
     {
