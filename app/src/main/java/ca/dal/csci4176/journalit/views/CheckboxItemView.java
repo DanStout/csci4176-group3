@@ -87,6 +87,9 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
         updateStrikethrough(mItem.isChecked());
     }
 
+    /**
+     * By default, the checkbox will get the focus. Instead we want the EditText to be focused
+     */
     @Override
     protected boolean onRequestFocusInDescendants(int direction, Rect previouslyFocusedRect)
     {

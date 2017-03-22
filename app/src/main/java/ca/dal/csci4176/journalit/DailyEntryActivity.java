@@ -36,10 +36,13 @@ import timber.log.Timber;
 
 public class DailyEntryActivity extends AppCompatActivity
 {
-    private DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
-
+    private static final DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
     private static final String EXTRA_ENTRY_ID = "entry_id";
     private static final int REQ_TAKE_PHOTO = 1;
+
+    private DailyEntry mEntry;
+    private Realm mRealm;
+    private File mPhotoFile;
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -62,7 +65,7 @@ public class DailyEntryActivity extends AppCompatActivity
         Intent in = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try
         {
-            mFile = createImageFile();
+            mPhotoFile = createImageFile();
         }
         catch (IOException e)
         {
@@ -71,7 +74,7 @@ public class DailyEntryActivity extends AppCompatActivity
             return;
         }
 
-        Uri imgUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", mFile);
+        Uri imgUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", mPhotoFile);
         in.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
         ClipData clip = ClipData.newUri(getContentResolver(), "Photo", imgUri);
         in.setClipData(clip);
@@ -83,15 +86,9 @@ public class DailyEntryActivity extends AppCompatActivity
         }
     }
 
-    private DailyEntry mEntry;
-
-    private Realm mRealm;
-
-    private File mFile;
-
     private File createImageFile() throws IOException
     {
-        String imgName = "img_"+ LocalDateTime.now().format(mImgFileNameDateFormat) + "_";
+        String imgName = "img_" + LocalDateTime.now().format(mImgFileNameDateFormat) + "_";
         File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         return File.createTempFile(imgName, ".jpg", dir);
     }
@@ -279,12 +276,12 @@ public class DailyEntryActivity extends AppCompatActivity
     {
         if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK)
         {
-//            Bitmap img = (Bitmap) data.getExtras().get("data");
-            Timber.d("File path: %s", mFile.getPath());
-            Bitmap img = BitmapFactory.decodeFile(mFile.getPath());
+//            Bitmap thumb = (Bitmap) data.getExtras().get("data");
+            Timber.d("File path: %s", mPhotoFile.getPath());
+            Bitmap img = BitmapFactory.decodeFile(mPhotoFile.getPath());
             mPhoto.setImageBitmap(img);
 
-            mRealm.executeTransaction(r -> mEntry.setPhotoPath(mFile.getPath()));
+            mRealm.executeTransaction(r -> mEntry.setPhotoPath(mPhotoFile.getPath()));
 
             mNoPhotoCont.setVisibility(View.GONE);
             mPhoto.setVisibility(View.VISIBLE);
