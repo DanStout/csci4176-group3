@@ -117,6 +117,7 @@ public class DailyEntryActivity extends AppCompatActivity
         {
             Timber.w("Extra %s not found!", EXTRA_ENTRY_ID);
             finish();
+            return;
         }
 
         mEntry = mRealm
@@ -126,6 +127,12 @@ public class DailyEntryActivity extends AppCompatActivity
 
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
+
+        Bitmap photo = BitmapFactory.decodeFile(mEntry.getPhotoPath());
+        if (photo != null)
+        {
+            setPhoto(photo);
+        }
 
         mEntry.getNotes().addChangeListener((col, changeSet) ->
         {
@@ -276,16 +283,18 @@ public class DailyEntryActivity extends AppCompatActivity
     {
         if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK)
         {
-//            Bitmap thumb = (Bitmap) data.getExtras().get("data");
             Timber.d("File path: %s", mPhotoFile.getPath());
-            Bitmap img = BitmapFactory.decodeFile(mPhotoFile.getPath());
-            mPhoto.setImageBitmap(img);
-
             mRealm.executeTransaction(r -> mEntry.setPhotoPath(mPhotoFile.getPath()));
-
-            mNoPhotoCont.setVisibility(View.GONE);
-            mPhoto.setVisibility(View.VISIBLE);
+            Bitmap img = BitmapFactory.decodeFile(mPhotoFile.getPath());
+            setPhoto(img);
         }
+    }
+
+    private void setPhoto(Bitmap bitmap)
+    {
+        mPhoto.setImageBitmap(bitmap);
+        mNoPhotoCont.setVisibility(View.GONE);
+        mPhoto.setVisibility(View.VISIBLE);
     }
 
     @Override

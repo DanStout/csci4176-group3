@@ -1,5 +1,8 @@
 package ca.dal.csci4176.journalit.models;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
 
@@ -13,7 +16,7 @@ import io.realm.annotations.Required;
 
 public class DailyEntry extends RealmObject
 {
-    private static DateTimeFormatter sDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static DateTimeFormatter sDateFormat = DateTimeFormatter.ofPattern("EEE MMMM d, yyyy");
 
     @Required
     private Date date;

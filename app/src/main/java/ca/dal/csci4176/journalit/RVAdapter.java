@@ -65,7 +65,6 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
                 }
             }
             setPhoto(entry.getPhotoPath());
-
             this.entry = entry;
         }
 
@@ -76,7 +75,7 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
                 Bitmap full = BitmapFactory.decodeFile(path);
                 if (full != null)
                 {
-                    Bitmap thumb = ThumbnailUtils.extractThumbnail(full, 100, 100);
+                    Bitmap thumb = ThumbnailUtils.extractThumbnail(full, 150, 150);
                     picture.setImageBitmap(thumb);
                     return;
                 }
