@@ -1,5 +1,6 @@
 package ca.dal.csci4176.journalit;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +9,11 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.google.android.gms.common.Scopes;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.fitness.Fitness;
 
 import org.threeten.bp.LocalDate;
 
@@ -42,6 +48,8 @@ public class MainActivity extends AppCompatActivity
         ButterKnife.bind(this);
 
         setSupportActionBar(mToolbar);
+
+        checkGoogleSignin();
 
         mRecycler.setHasFixedSize(true);
         LinearLayoutManager llm = new LinearLayoutManager(this);
@@ -79,6 +87,19 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Make the user sign in so we can get the fitness data
+     */
+    private void checkGoogleSignin()
+    {
+        GoogleApiClient client = new GoogleApiClient.Builder(this)
+                .addApi(Fitness.HISTORY_API)
+                .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ))
+                .enableAutoManage(this, connectionResult -> Timber.d("Connection failed: %s", connectionResult))
+                .build();
+        client.connect();
+    }
+
     private void openTodayEntry()
     {
         startActivity(DailyEntryActivity.getIntent(this, mToday));
@@ -97,6 +118,8 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.menu_settings:
                 Timber.d("Settings");
+                Intent i = new Intent(MainActivity.this, Setting.class);
+                startActivity(i);
                 break;
         }
         return super.onOptionsItemSelected(item);

@@ -32,6 +32,11 @@
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="stateHidden"
             />
+        <activity
+            android:name=".Setting"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="stateHidden"
+            />
 
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -43,8 +48,15 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"
                 />
-
         </provider>
+
+        <service android:name=".service.DailyStepService" />
+
+        <receiver android:name=".service.StartupBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

@@ -3,6 +3,7 @@ package ca.dal.csci4176.journalit;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -15,6 +16,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.threeten.bp.LocalDateTime;
@@ -50,14 +52,23 @@ public class DailyEntryActivity extends AppCompatActivity
     @BindView(R.id.entry_notes_container)
     LinearLayout mNoteCont;
 
+    @BindView(R.id.entry_notes)
+    TextView mNote;
+
     @BindView(R.id.entry_tasks_container)
     LinearLayout mTaskCont;
+
+    @BindView(R.id.entry_tasks)
+    TextView mTask;
 
     @BindView(R.id.entry_no_photo_container)
     LinearLayout mNoPhotoCont;
 
     @BindView(R.id.entry_photo)
     ImageView mPhoto;
+
+    @BindView(R.id.entry_steps)
+    TextView mSteps;
 
     @OnClick(R.id.entry_no_photo_container)
     public void takePhoto()
@@ -74,7 +85,8 @@ public class DailyEntryActivity extends AppCompatActivity
             return;
         }
 
-        Uri imgUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".fileprovider", mPhotoFile);
+        Uri imgUri = FileProvider.getUriForFile(this,
+                BuildConfig.APPLICATION_ID + ".fileprovider", mPhotoFile);
         in.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
         ClipData clip = ClipData.newUri(getContentResolver(), "Photo", imgUri);
         in.setClipData(clip);
@@ -127,6 +139,7 @@ public class DailyEntryActivity extends AppCompatActivity
 
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
+        mSteps.setText(String.valueOf(mEntry.getSteps()));
 
         Bitmap photo = BitmapFactory.decodeFile(mEntry.getPhotoPath());
         if (photo != null)
@@ -149,7 +162,7 @@ public class DailyEntryActivity extends AppCompatActivity
                 mNoteCont.getChildAt(next).requestFocus();
             }
 
-            for(int pos : changeSet.getChanges())
+            for (int pos : changeSet.getChanges())
             {
                 BulletItemView v = (BulletItemView) mNoteCont.getChildAt(pos);
                 v.updateFromItem();
@@ -178,7 +191,7 @@ public class DailyEntryActivity extends AppCompatActivity
                 mTaskCont.getChildAt(next).requestFocus();
             }
 
-            for(int pos : changeSet.getChanges())
+            for (int pos : changeSet.getChanges())
             {
                 Timber.d("Checkbox item %d changed", pos);
                 CheckboxItemView v = (CheckboxItemView) mTaskCont.getChildAt(pos);
@@ -311,5 +324,39 @@ public class DailyEntryActivity extends AppCompatActivity
     {
         super.onDestroy();
         mRealm.close();
+    }
+
+    private boolean load(String s, boolean defaultVal)
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("BooleanValue", 0);
+        return sharedPreferences.getBoolean(s, defaultVal);
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        boolean shownote = load("note", true);
+        boolean showtask = load("task", true);
+        if (shownote)
+        {
+            mNoteCont.setVisibility(View.VISIBLE);
+            mNote.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mNoteCont.setVisibility(View.GONE);
+            mNote.setVisibility(View.GONE);
+        }
+        if (showtask)
+        {
+            mTaskCont.setVisibility(View.VISIBLE);
+            mTask.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mTaskCont.setVisibility(View.GONE);
+            mTask.setVisibility(View.GONE);
+        }
     }
 }

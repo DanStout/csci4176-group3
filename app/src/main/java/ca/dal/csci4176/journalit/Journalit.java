@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
+import ca.dal.csci4176.journalit.service.DailyStepService;
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
 import timber.log.Timber;
@@ -30,5 +31,7 @@ public class Journalit extends Application
                 .build();
 
         Realm.setDefaultConfiguration(config);
+
+        DailyStepService.enableChecking(this);
     }
 }
