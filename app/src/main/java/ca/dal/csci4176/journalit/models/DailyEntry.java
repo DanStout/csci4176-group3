@@ -30,6 +30,8 @@ public class DailyEntry extends RealmObject
 
     private RealmList<CheckboxItem> tasks;
 
+    private MoodItem mood;
+
     public static long getKeyOfToday()
     {
         LocalDate now = LocalDate.now();
@@ -81,6 +83,14 @@ public class DailyEntry extends RealmObject
     {
         this.date = DateUtils.toDate(date);
         this.key = getKey(this.date);
+    }
+
+    public MoodItem getMood() {
+        return mood;
+    }
+
+    public void setMood(MoodItem mood) {
+        this.mood = mood;
     }
 
     @Override

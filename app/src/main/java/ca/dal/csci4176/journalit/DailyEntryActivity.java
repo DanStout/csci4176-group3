@@ -12,9 +12,13 @@ import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import org.threeten.bp.LocalDateTime;
@@ -29,6 +33,8 @@ import butterknife.OnClick;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
+import ca.dal.csci4176.journalit.models.Mood;
+import ca.dal.csci4176.journalit.models.MoodItem;
 import ca.dal.csci4176.journalit.views.BulletItemView;
 import ca.dal.csci4176.journalit.views.CheckboxItemView;
 import io.realm.Realm;
@@ -128,6 +134,37 @@ public class DailyEntryActivity extends AppCompatActivity
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
 
+        Timber.d("Found mood: %s", mEntry.getMood());
+
+        Spinner mood_spinner = (Spinner) findViewById(R.id.mood_spinner);
+        ArrayAdapter<Mood> mood_adapter = new ArrayAdapter<Mood>(this, android.R.layout.simple_spinner_item, Mood.values());
+        mood_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mood_spinner.setAdapter(mood_adapter);
+
+        if(mEntry.getMood() != null) {
+            int index = mood_adapter.getPosition(mEntry.getMood().getEnum());
+            mood_spinner.setSelection(index);
+        }
+
+        mood_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Mood mood = (Mood) parent.getItemAtPosition(position);
+
+                mRealm.beginTransaction();
+                MoodItem mItem = mRealm.createObject(MoodItem.class);
+                mItem.saveEnum(mood);
+                mEntry.setMood(mItem);
+                mRealm.commitTransaction();
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                return;
+            }
+        });
+
         Bitmap photo = BitmapFactory.decodeFile(mEntry.getPhotoPath());
         if (photo != null)
         {
@@ -182,6 +219,7 @@ public class DailyEntryActivity extends AppCompatActivity
             CheckboxItem item = mEntry.getTasks().get(i);
             addCheckboxItem(item, i, false);
         }
+
     }
 
     private void addCheckboxItem(CheckboxItem item, int pos, boolean doFocus)
