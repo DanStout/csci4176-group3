@@ -31,19 +31,23 @@ public class DailyEntry extends RealmObject
 
     private double latitude, longitude;
 
-    public double getLatitude() {
+    public double getLatitude()
+    {
         return latitude;
     }
 
-    public void setLatitude(double latitude) {
+    public void setLatitude(double latitude)
+    {
         this.latitude = latitude;
     }
 
-    public double getLongitude() {
+    public double getLongitude()
+    {
         return longitude;
     }
 
-    public void setLongitude(double longitude) {
+    public void setLongitude(double longitude)
+    {
         this.longitude = longitude;
     }
 
@@ -102,11 +106,13 @@ public class DailyEntry extends RealmObject
         this.key = getKey(this.date);
     }
 
-    public MoodItem getMood() {
+    public MoodItem getMood()
+    {
         return mood;
     }
 
-    public void setMood(MoodItem mood) {
+    public void setMood(MoodItem mood)
+    {
         this.mood = mood;
     }
 

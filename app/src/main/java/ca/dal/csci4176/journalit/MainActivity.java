@@ -1,12 +1,19 @@
 package ca.dal.csci4176.journalit;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -14,6 +21,12 @@ import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.fitness.Fitness;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.single.PermissionListener;
 
 import org.threeten.bp.LocalDate;
 
@@ -40,6 +53,8 @@ public class MainActivity extends AppCompatActivity
 
     private DailyEntry mToday;
 
+    private Realm mRealm;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -57,34 +72,112 @@ public class MainActivity extends AppCompatActivity
 
         mFab.setOnClickListener(v -> openTodayEntry());
 
-        Realm realm = Realm.getDefaultInstance();
+        mRealm = Realm.getDefaultInstance();
 
-        RealmResults<DailyEntry> entries = realm
+        RealmResults<DailyEntry> entries = mRealm
                 .where(DailyEntry.class)
                 .findAllSorted("key", Sort.DESCENDING);
 
         RVAdapter adapter = new RVAdapter(this, entries);
         mRecycler.setAdapter(adapter);
 
-        mToday = realm
+        mToday = mRealm
                 .where(DailyEntry.class)
                 .equalTo("key", DailyEntry.getKeyOfToday())
                 .findFirst();
 
         if (mToday == null)
         {
-            mToday = new DailyEntry();
-            mToday.setDate(LocalDate.now());
-
-            BulletItem note = new BulletItem("");
-            CheckboxItem task = new CheckboxItem("", false);
-
-            realm.beginTransaction();
-            mToday = realm.copyToRealm(mToday);
-            mToday.getNotes().add(note);
-            mToday.getTasks().add(task);
-            realm.commitTransaction();
+            mToday = createAndSaveEntryForToday();
         }
+    }
+
+    private DailyEntry createAndSaveEntryForToday()
+    {
+        DailyEntry ent = new DailyEntry();
+        ent.setDate(LocalDate.now());
+
+        BulletItem note = new BulletItem("");
+        CheckboxItem task = new CheckboxItem("", false);
+
+        mRealm.beginTransaction();
+        ent = mRealm.copyToRealm(ent);
+        ent.getNotes().add(note);
+        ent.getTasks().add(task);
+        mRealm.commitTransaction();
+
+        saveCreationLocationForEntry(ent);
+
+        return ent;
+    }
+
+    private void saveCreationLocationForEntry(DailyEntry ent)
+    {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria gpsConf = new Criteria();
+        gpsConf.setAccuracy(Criteria.ACCURACY_FINE);
+        gpsConf.setPowerRequirement(Criteria.POWER_MEDIUM);
+        gpsConf.setAltitudeRequired(false);
+        gpsConf.setSpeedRequired(false);
+        gpsConf.setBearingRequired(false);
+        gpsConf.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
+
+        LocationListener locationListener = new LocationListener()
+        {
+            @Override
+            public void onLocationChanged(Location location)
+            {
+                Log.d("Location Changed.", location.toString());
+                mRealm.beginTransaction();
+                ent.setLatitude(location.getLatitude());
+                ent.setLongitude(location.getLongitude());
+                mRealm.commitTransaction();
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras)
+            {
+                Log.d("Status Changed.", String.valueOf(status));
+            }
+
+            @Override
+            public void onProviderEnabled(String provider)
+            {
+                Log.d("Provider Enabled", provider);
+            }
+
+            @Override
+            public void onProviderDisabled(String provider)
+            {
+                Log.d("Provider Disabled", provider);
+            }
+        };
+
+        Dexter.withActivity(this)
+                .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                .withListener(new PermissionListener()
+                {
+                    @Override
+                    public void onPermissionGranted(PermissionGrantedResponse response)
+                    {
+                        Timber.d("Permission granted");
+                        //noinspection MissingPermission
+                        locationManager.requestSingleUpdate(gpsConf, locationListener, null);
+                    }
+
+                    @Override
+                    public void onPermissionDenied(PermissionDeniedResponse response)
+                    {
+                        Timber.d("Permission denied");
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token)
+                    {
+                        Timber.d("Show rationale");
+                    }
+                })
+                .check();
     }
 
     /**
@@ -130,5 +223,12 @@ public class MainActivity extends AppCompatActivity
     {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        mRealm.close();
     }
 }
