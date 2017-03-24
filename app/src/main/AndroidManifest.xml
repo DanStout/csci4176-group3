@@ -32,6 +32,11 @@
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="stateHidden"
             />
+        <activity
+            android:name=".Setting"
+            android:parentActivityName=".MainActivity"
+            android:windowSoftInputMode="stateHidden"
+            />
 
         <provider
             android:name="android.support.v4.content.FileProvider"

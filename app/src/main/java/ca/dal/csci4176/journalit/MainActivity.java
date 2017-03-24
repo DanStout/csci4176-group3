@@ -1,5 +1,6 @@
 package ca.dal.csci4176.journalit;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity
         ButterKnife.bind(this);
 
         setSupportActionBar(mToolbar);
+
 
         mRecycler.setHasFixedSize(true);
         LinearLayoutManager llm = new LinearLayoutManager(this);
@@ -97,6 +99,8 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.menu_settings:
                 Timber.d("Settings");
+                Intent i = new Intent(MainActivity.this, Setting.class);
+                startActivity(i);
                 break;
         }
         return super.onOptionsItemSelected(item);
