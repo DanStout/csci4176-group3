@@ -22,6 +22,7 @@ import org.threeten.bp.ZoneId;
 
 import java.util.concurrent.TimeUnit;
 
+import ca.dal.csci4176.journalit.Prefs;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import io.realm.Realm;
 import timber.log.Timber;
@@ -54,11 +55,17 @@ public class DailyStepService extends IntentService
     {
         Timber.d("Handling intent");
 
+
+        if (!new Prefs(this).isSignedIn())
+        {
+            Timber.d("User is not signed into Google account; returning early");
+            return;
+        }
+
         GoogleApiClient client = new GoogleApiClient.Builder(this)
                 .addApi(Fitness.HISTORY_API)
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ))
                 .build();
-
 
         Realm realm = Realm.getDefaultInstance();
         try

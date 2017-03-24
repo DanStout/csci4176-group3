@@ -34,7 +34,7 @@
             android:windowSoftInputMode="stateHidden"
             />
         <activity
-            android:name=".Setting"
+            android:name=".SettingsActivity"
             android:parentActivityName=".MainActivity"
             android:windowSoftInputMode="stateHidden"
             />

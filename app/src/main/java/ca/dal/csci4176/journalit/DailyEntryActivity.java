@@ -105,6 +105,10 @@ public class DailyEntryActivity extends AppCompatActivity
         {
             startActivityForResult(in, REQ_TAKE_PHOTO);
         }
+        else
+        {
+            Timber.d("Unable to find activity to take photo");
+        }
     }
 
     private File createImageFile() throws IOException

@@ -49,4 +49,5 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
     compile 'com.google.android.gms:play-services-fitness:10.2.1'
     compile 'com.karumi:dexter:4.0.0'
+    compile 'com.afollestad.material-dialogs:core:0.9.4.2'
 }

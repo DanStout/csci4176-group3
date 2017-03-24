@@ -8,6 +8,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,6 +18,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
@@ -55,13 +57,15 @@ public class MainActivity extends AppCompatActivity
 
     private Realm mRealm;
 
+    private Prefs mPrefs;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
+        mPrefs = new Prefs(this);
         setSupportActionBar(mToolbar);
 
         checkGoogleSignin();
@@ -174,7 +178,22 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token)
                     {
-                        Timber.d("Show rationale");
+                        Timber.d("Showing rationale..");
+                        new MaterialDialog.Builder(MainActivity.this)
+                                .content(R.string.rationale_location)
+                                .positiveText(R.string.OK)
+                                .negativeText(R.string.no_thanks)
+                                .onPositive((dialog, which) ->
+                                {
+                                    Timber.d("Continuing with permission request");
+                                    token.continuePermissionRequest();
+                                })
+                                .onNegative((dialog, which) ->
+                                {
+                                    Timber.d("Cancelling permission request");
+                                    token.cancelPermissionRequest();
+                                })
+                                .show();
                     }
                 })
                 .check();
@@ -185,10 +204,46 @@ public class MainActivity extends AppCompatActivity
      */
     private void checkGoogleSignin()
     {
+        if (mPrefs.isSignedIn())
+        {
+            connectGoogleApiClient();
+        }
+        else if (!mPrefs.didUserDeclineGoogleAcc())
+        {
+            new MaterialDialog.Builder(this)
+                    .content(R.string.explain_google_acc)
+                    .positiveText(R.string.yes)
+                    .negativeText(R.string.no)
+                    .onPositive((dialog, which) -> connectGoogleApiClient())
+                    .onNegative((dialog, which) -> mPrefs.setDidUserDeclineGoogleAcc(true))
+                    .show();
+        }
+    }
+
+    private void connectGoogleApiClient()
+    {
         GoogleApiClient client = new GoogleApiClient.Builder(this)
                 .addApi(Fitness.HISTORY_API)
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ))
-                .enableAutoManage(this, connectionResult -> Timber.d("Connection failed: %s", connectionResult))
+                .enableAutoManage(this, res ->
+                {
+                    Timber.d("Connection failed: %s", res);
+                    mPrefs.setSignedIn(false);
+                })
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks()
+                {
+                    @Override
+                    public void onConnected(@Nullable Bundle bundle)
+                    {
+                        mPrefs.setSignedIn(true);
+                    }
+
+                    @Override
+                    public void onConnectionSuspended(int i)
+                    {
+
+                    }
+                })
                 .build();
         client.connect();
     }
@@ -211,7 +266,7 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.menu_settings:
                 Timber.d("Settings");
-                Intent i = new Intent(MainActivity.this, Setting.class);
+                Intent i = new Intent(MainActivity.this, SettingsActivity.class);
                 startActivity(i);
                 break;
         }

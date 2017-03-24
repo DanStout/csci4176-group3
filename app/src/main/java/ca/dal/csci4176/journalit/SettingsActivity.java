@@ -15,7 +15,7 @@ import android.widget.ToggleButton;
  * Created by WZ on 2017/3/23.
  */
 
-public class Setting extends AppCompatActivity implements View.OnClickListener{
+public class SettingsActivity extends AppCompatActivity implements View.OnClickListener{
 
     private Toolbar mToolbar;
     private ToggleButton location;
@@ -25,7 +25,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.setting);
+        setContentView(R.layout.activity_settings);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         location = (ToggleButton) findViewById(R.id.tb);
@@ -33,7 +33,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
         task = (CheckBox) findViewById(R.id.task);
         button = (Button) findViewById(R.id.button);
         button.setOnClickListener(this);
-        mToolbar.setTitle("Setting");
+        mToolbar.setTitle("SettingsActivity");
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -73,7 +73,7 @@ public class Setting extends AppCompatActivity implements View.OnClickListener{
             save("note", note.isChecked());
             save("task", task.isChecked());
             save("location", location.isChecked());
-            Intent i = new Intent(Setting.this, MainActivity.class);
+            Intent i = new Intent(SettingsActivity.this, MainActivity.class);
             startActivity(i);
         }
     }

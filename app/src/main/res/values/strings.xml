@@ -9,4 +9,10 @@
     <string name="photo_failed">Failed to take photo</string>
     <string name="entry_section_steps">Steps:</string>
     <string name="mood">Mood:</string>
+    <string name="OK">OK</string>
+    <string name="rationale_location">Journalit requires location permissions in order to save where you were when you created an entry</string>
+    <string name="no_thanks">No Thanks</string>
+    <string name="explain_google_acc">Journalit can fetch information from Google Fit. Would you like to select which Google account your data should come from?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>
