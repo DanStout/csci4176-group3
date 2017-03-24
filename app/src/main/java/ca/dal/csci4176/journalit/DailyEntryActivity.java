@@ -14,11 +14,13 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
@@ -31,6 +33,8 @@ import butterknife.OnClick;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
+import ca.dal.csci4176.journalit.models.Mood;
+import ca.dal.csci4176.journalit.models.MoodItem;
 import ca.dal.csci4176.journalit.views.BulletItemView;
 import ca.dal.csci4176.journalit.views.CheckboxItemView;
 import io.realm.Realm;
@@ -122,6 +126,28 @@ public class DailyEntryActivity extends AppCompatActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
+
+        super.onResume();
+        boolean shownote = load("note");
+        boolean showtask = load("task");
+        if (shownote == true) {
+            mNoteCont.setVisibility(View.VISIBLE);
+            mNote.setVisibility(View.VISIBLE);
+        }
+        else{
+            mNoteCont.setVisibility(View.GONE);
+            mNote.setVisibility(View.GONE);
+        }
+        if (showtask == true){
+            mTaskCont.setVisibility(View.VISIBLE);
+            mTask.setVisibility(View.VISIBLE);
+        }
+        else {
+            mTaskCont.setVisibility(View.GONE);
+            mTask.setVisibility(View.GONE);
+        }
+
+
         mRealm = Realm.getDefaultInstance();
 
         long id = getIntent().getLongExtra(EXTRA_ENTRY_ID, -1);
@@ -140,6 +166,37 @@ public class DailyEntryActivity extends AppCompatActivity
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
         mSteps.setText(String.valueOf(mEntry.getSteps()));
+
+        Timber.d("Found mood: %s", mEntry.getMood());
+
+        Spinner mood_spinner = (Spinner) findViewById(R.id.mood_spinner);
+        ArrayAdapter<Mood> mood_adapter = new ArrayAdapter<Mood>(this, android.R.layout.simple_spinner_item, Mood.values());
+        mood_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mood_spinner.setAdapter(mood_adapter);
+
+        if(mEntry.getMood() != null) {
+            int index = mood_adapter.getPosition(mEntry.getMood().getEnum());
+            mood_spinner.setSelection(index);
+        }
+
+        mood_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Mood mood = (Mood) parent.getItemAtPosition(position);
+
+                mRealm.beginTransaction();
+                MoodItem mItem = mRealm.createObject(MoodItem.class);
+                mItem.saveEnum(mood);
+                mEntry.setMood(mItem);
+                mRealm.commitTransaction();
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                return;
+            }
+        });
 
         Bitmap photo = BitmapFactory.decodeFile(mEntry.getPhotoPath());
         if (photo != null)
@@ -204,6 +261,7 @@ public class DailyEntryActivity extends AppCompatActivity
             CheckboxItem item = mEntry.getTasks().get(i);
             addCheckboxItem(item, i, false);
         }
+
     }
 
     private void addCheckboxItem(CheckboxItem item, int pos, boolean doFocus)
