@@ -3,6 +3,7 @@ package ca.dal.csci4176.journalit;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -12,15 +13,14 @@ import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
@@ -56,8 +56,14 @@ public class DailyEntryActivity extends AppCompatActivity
     @BindView(R.id.entry_notes_container)
     LinearLayout mNoteCont;
 
+    @BindView(R.id.entry_notes)
+    TextView mNote;
+
     @BindView(R.id.entry_tasks_container)
     LinearLayout mTaskCont;
+
+    @BindView(R.id.entry_tasks)
+    TextView mTask;
 
     @BindView(R.id.entry_no_photo_container)
     LinearLayout mNoPhotoCont;
@@ -115,6 +121,28 @@ public class DailyEntryActivity extends AppCompatActivity
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+
+        super.onResume();
+        boolean shownote = load("note");
+        boolean showtask = load("task");
+        if (shownote == true) {
+            mNoteCont.setVisibility(View.VISIBLE);
+            mNote.setVisibility(View.VISIBLE);
+        }
+        else{
+            mNoteCont.setVisibility(View.GONE);
+            mNote.setVisibility(View.GONE);
+        }
+        if (showtask == true){
+            mTaskCont.setVisibility(View.VISIBLE);
+            mTask.setVisibility(View.VISIBLE);
+        }
+        else {
+            mTaskCont.setVisibility(View.GONE);
+            mTask.setVisibility(View.GONE);
+        }
+
 
         mRealm = Realm.getDefaultInstance();
 
@@ -340,5 +368,33 @@ public class DailyEntryActivity extends AppCompatActivity
     {
         super.onDestroy();
         mRealm.close();
+    }
+
+    private boolean load(String s) {
+        SharedPreferences sharedPreferences = getSharedPreferences("BooleanValue", 0);
+        return sharedPreferences.getBoolean(s, false);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        boolean shownote = load("note");
+        boolean showtask = load("task");
+        if (shownote == true) {
+            mNoteCont.setVisibility(View.VISIBLE);
+            mNote.setVisibility(View.VISIBLE);
+        }
+        else{
+            mNoteCont.setVisibility(View.GONE);
+            mNote.setVisibility(View.GONE);
+        }
+        if (showtask == true){
+            mTaskCont.setVisibility(View.VISIBLE);
+            mTask.setVisibility(View.VISIBLE);
+        }
+        else {
+            mTaskCont.setVisibility(View.GONE);
+            mTask.setVisibility(View.GONE);
+        }
     }
 }

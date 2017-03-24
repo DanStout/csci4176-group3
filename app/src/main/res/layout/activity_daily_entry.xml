@@ -22,6 +22,7 @@
             >
 
             <TextView
+                android:id="@+id/entry_notes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/entry_section_notes"
@@ -36,6 +37,7 @@
                 />
 
             <TextView
+                android:id="@+id/entry_tasks"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/entry_section_tasks"
