@@ -1,8 +1,5 @@
 package ca.dal.csci4176.journalit.models;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-
 import org.threeten.bp.LocalDate;
 import org.threeten.bp.format.DateTimeFormatter;
 
@@ -25,6 +22,8 @@ public class DailyEntry extends RealmObject
     private long key;
 
     private String photoPath;
+
+    private int steps;
 
     private RealmList<BulletItem> notes;
 
@@ -92,5 +91,15 @@ public class DailyEntry extends RealmObject
                 ", notes=" + notes +
                 ", tasks=" + tasks +
                 '}';
+    }
+
+    public int getSteps()
+    {
+        return steps;
+    }
+
+    public void setSteps(int steps)
+    {
+        this.steps = steps;
     }
 }

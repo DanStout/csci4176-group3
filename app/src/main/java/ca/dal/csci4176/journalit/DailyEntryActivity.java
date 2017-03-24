@@ -136,20 +136,24 @@ public class DailyEntryActivity extends AppCompatActivity
 
         mEntry.getNotes().addChangeListener((col, changeSet) ->
         {
-            int[] inserts = changeSet.getInsertions();
-
-            for (int pos : inserts)
+            for (int pos : changeSet.getInsertions())
             {
                 BulletItem item = col.get(pos);
                 addBulletItem(item, pos, true);
             }
 
-            int[] deletes = changeSet.getDeletions();
-            for (int pos : deletes)
+            for (int pos : changeSet.getDeletions())
             {
                 mNoteCont.removeViewAt(pos);
                 int next = pos == 0 ? pos + 1 : pos - 1;
                 mNoteCont.getChildAt(next).requestFocus();
+            }
+
+            for(int pos : changeSet.getChanges())
+            {
+                BulletItemView v = (BulletItemView) mNoteCont.getChildAt(pos);
+                v.updateFromItem();
+                Timber.d("Bullet item %d changed", pos);
             }
         });
 
@@ -161,19 +165,24 @@ public class DailyEntryActivity extends AppCompatActivity
 
         mEntry.getTasks().addChangeListener((col, changeSet) ->
         {
-            int[] inserts = changeSet.getInsertions();
-            for (int pos : inserts)
+            for (int pos : changeSet.getInsertions())
             {
                 CheckboxItem item = col.get(pos);
                 addCheckboxItem(item, pos, true);
             }
 
-            int[] deletes = changeSet.getDeletions();
-            for (int pos : deletes)
+            for (int pos : changeSet.getDeletions())
             {
                 mTaskCont.removeViewAt(pos);
                 int next = pos == 0 ? pos + 1 : pos - 1;
                 mTaskCont.getChildAt(next).requestFocus();
+            }
+
+            for(int pos : changeSet.getChanges())
+            {
+                Timber.d("Checkbox item %d changed", pos);
+                CheckboxItemView v = (CheckboxItemView) mTaskCont.getChildAt(pos);
+                v.updateFromItem();
             }
         });
 

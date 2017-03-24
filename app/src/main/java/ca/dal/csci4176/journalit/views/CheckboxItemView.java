@@ -10,6 +10,7 @@ import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.R;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
 import io.realm.Realm;
+import timber.log.Timber;
 
 public class CheckboxItemView extends BaseItemView<CheckboxItem>
 {
@@ -43,7 +44,9 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
             return;
         }
 
-        mRealm.executeTransaction(r -> mItem.setText(mEditTxt.getText().toString()));
+        String txt = mEditTxt.getText().toString();
+        Timber.d("Saving text to checkbox item: '%s'", txt);
+        mRealm.executeTransaction(r -> mItem.setText(txt));
     }
 
     private void updateStrikethrough(boolean isChecked)
@@ -61,20 +64,22 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
         }
     }
 
+    @Override
     public void bindToItem(CheckboxItem item)
     {
         mItem = item;
-        updateForItem();
-        mItem.addChangeListener(element -> updateForItem());
+        updateFromItem();
     }
 
-    private void updateForItem()
+    @Override
+    public void updateFromItem()
     {
         if (!mItem.isValid())
         {
             return;
         }
 
+        Timber.d("Updating checkbox item");
         mCheck.setChecked(mItem.isChecked());
 
         if (!mEditTxt.getText().toString().equals(mItem.getText()))

@@ -6,6 +6,7 @@ import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.R;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import io.realm.Realm;
+import timber.log.Timber;
 
 public class BulletItemView extends BaseItemView<BulletItem>
 {
@@ -31,22 +32,27 @@ public class BulletItemView extends BaseItemView<BulletItem>
             return;
         }
 
-        mRealm.executeTransaction(r -> mItem.setText(mEditTxt.getText().toString()));
+        String txt = mEditTxt.getText().toString();
+        Timber.d("Saving text to bullet item: '%s'", txt);
+        mRealm.executeTransaction(r -> mItem.setText(txt));
     }
 
+    @Override
     public void bindToItem(BulletItem item)
     {
         mItem = item;
-        updateForItem();
-        mItem.addChangeListener(element -> updateForItem());
+        updateFromItem();
     }
 
-    private void updateForItem()
+    @Override
+    public void updateFromItem()
     {
         if (!mItem.isValid())
         {
             return;
         }
+
+        Timber.d("Updating bullet item");
 
         if (!mEditTxt.getText().toString().equals(mItem.getText()))
         {
