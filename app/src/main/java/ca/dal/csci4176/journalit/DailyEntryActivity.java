@@ -126,28 +126,6 @@ public class DailyEntryActivity extends AppCompatActivity
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-
-        super.onResume();
-        boolean shownote = load("note");
-        boolean showtask = load("task");
-        if (shownote == true) {
-            mNoteCont.setVisibility(View.VISIBLE);
-            mNote.setVisibility(View.VISIBLE);
-        }
-        else{
-            mNoteCont.setVisibility(View.GONE);
-            mNote.setVisibility(View.GONE);
-        }
-        if (showtask == true){
-            mTaskCont.setVisibility(View.VISIBLE);
-            mTask.setVisibility(View.VISIBLE);
-        }
-        else {
-            mTaskCont.setVisibility(View.GONE);
-            mTask.setVisibility(View.GONE);
-        }
-
-
         mRealm = Realm.getDefaultInstance();
 
         long id = getIntent().getLongExtra(EXTRA_ENTRY_ID, -1);
