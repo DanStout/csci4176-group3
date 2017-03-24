@@ -8,6 +8,7 @@
         android:required="true"
         />
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
         android:name=".Journalit"
         android:allowBackup="true"

@@ -29,6 +29,24 @@ public class DailyEntry extends RealmObject
 
     private RealmList<CheckboxItem> tasks;
 
+    private double latitude, longitude;
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
     private MoodItem mood;
 
     public static long getKeyOfToday()
