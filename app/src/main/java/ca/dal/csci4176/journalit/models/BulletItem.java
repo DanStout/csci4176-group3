@@ -2,7 +2,7 @@ package ca.dal.csci4176.journalit.models;
 
 import io.realm.RealmObject;
 
-public class BulletItem extends RealmObject
+public class BulletItem extends RealmObject implements TextItem
 {
     private String text;
 

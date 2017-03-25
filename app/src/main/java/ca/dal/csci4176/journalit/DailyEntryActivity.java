@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -21,6 +22,8 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.jmedeisis.draglinearlayout.DragLinearLayout;
 
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
@@ -56,13 +59,13 @@ public class DailyEntryActivity extends AppCompatActivity
     Toolbar mToolbar;
 
     @BindView(R.id.entry_notes_container)
-    LinearLayout mNoteCont;
+    DragLinearLayout mNoteCont;
 
     @BindView(R.id.entry_notes)
     TextView mNote;
 
     @BindView(R.id.entry_tasks_container)
-    LinearLayout mTaskCont;
+    DragLinearLayout mTaskCont;
 
     @BindView(R.id.entry_tasks)
     TextView mTask;
@@ -125,6 +128,8 @@ public class DailyEntryActivity extends AppCompatActivity
         return in;
     }
 
+    private Drawable mBackDraw;
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -136,6 +141,9 @@ public class DailyEntryActivity extends AppCompatActivity
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         mRealm = Realm.getDefaultInstance();
+
+        // If we don't make a copy of the BG drawable, the UI will go all crazy when we reuse it
+        mBackDraw = getWindow().getDecorView().getBackground().getConstantState().newDrawable();
 
         long id = getIntent().getLongExtra(EXTRA_ENTRY_ID, -1);
         if (id == -1)
@@ -181,7 +189,6 @@ public class DailyEntryActivity extends AppCompatActivity
                 mItem.saveEnum(mood);
                 mEntry.setMood(mItem);
                 mRealm.commitTransaction();
-
             }
 
             @Override
@@ -225,6 +232,12 @@ public class DailyEntryActivity extends AppCompatActivity
             addBulletItem(item, i, false);
         }
 
+        mNoteCont.setOnViewSwapListener((firstView, firstPosition, secondView, secondPosition) ->
+        {
+            Timber.d("Checkbox moved: %d -> %d", firstPosition, secondPosition);
+            mRealm.executeTransaction(r -> mEntry.getNotes().move(firstPosition, secondPosition));
+        });
+
         mEntry.getTasks().addChangeListener((col, changeSet) ->
         {
             for (int pos : changeSet.getInsertions())
@@ -253,13 +266,21 @@ public class DailyEntryActivity extends AppCompatActivity
             CheckboxItem item = mEntry.getTasks().get(i);
             addCheckboxItem(item, i, false);
         }
+
+        mTaskCont.setOnViewSwapListener((firstView, firstPosition, secondView, secondPosition) ->
+        {
+            Timber.d("Checkbox moved: %d -> %d", firstPosition, secondPosition);
+            mRealm.executeTransaction(r -> mEntry.getTasks().move(firstPosition, secondPosition));
+        });
     }
 
     private void addCheckboxItem(CheckboxItem item, int pos, boolean doFocus)
     {
         CheckboxItemView bul = new CheckboxItemView(mRealm, this);
+        bul.setBackground(mBackDraw);
         bul.bindToItem(item);
-        mTaskCont.addView(bul, pos);
+        mTaskCont.addDragView(bul, bul.getMoveHandle(), pos);
+
         if (doFocus)
         {
             bul.requestFocus();
@@ -305,8 +326,9 @@ public class DailyEntryActivity extends AppCompatActivity
     private void addBulletItem(BulletItem item, int position, boolean doFocus)
     {
         BulletItemView bul = new BulletItemView(mRealm, this);
+        bul.setBackground(mBackDraw);
         bul.bindToItem(item);
-        mNoteCont.addView(bul, position);
+        mNoteCont.addDragView(bul, bul.getMoveHandle(), position);
         if (doFocus)
         {
             bul.requestFocus();

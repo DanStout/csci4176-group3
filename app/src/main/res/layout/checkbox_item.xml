@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    tools:parentTag="RelativeLayout"
+    tools:parentTag="LinearLayout"
     >
 
     <CheckBox
@@ -12,15 +12,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginRight="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         />
 
     <EditText
         android:id="@+id/checkbox_item_edit"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/checkbox_item_checkbox"
+        android:layout_weight="1"
         android:inputType="textMultiLine|textCapSentences"
         tools:text="Hello!"
+        />
+
+    <ImageView
+        android:id="@+id/item_move"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_move_arrow"
         />
 </merge>

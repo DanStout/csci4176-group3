@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@android:color/background_light"
     android:orientation="horizontal"
-    tools:parentTag="RelativeLayout"
+    tools:parentTag="LinearLayout"
     >
 
     <ImageView
@@ -12,16 +13,23 @@
         android:layout_width="10dp"
         android:layout_height="10dp"
         android:layout_marginTop="17dp"
-        android:layout_marginRight="8dp"
         android:src="@drawable/ic_circle"
         />
 
     <EditText
         android:id="@+id/bullet_item_edit"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/bullet_imgview"
+        android:layout_weight="1"
         android:inputType="textMultiLine|textCapSentences"
         tools:text="Hello!"
+        />
+
+    <ImageView
+        android:id="@+id/item_move"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_move_arrow"
         />
 </merge>

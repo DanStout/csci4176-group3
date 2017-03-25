@@ -1,7 +1,10 @@
 package ca.dal.csci4176.journalit.views;
 
 import android.content.Context;
+import android.view.View;
+import android.widget.ImageView;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.R;
 import ca.dal.csci4176.journalit.models.BulletItem;
@@ -13,6 +16,9 @@ public class BulletItemView extends BaseItemView<BulletItem>
     private BulletItem mItem;
     private Realm mRealm;
 
+    @BindView(R.id.item_move)
+    ImageView mMove;
+
     public BulletItemView(Realm realm, Context context)
     {
         super(context, R.layout.bullet_item, R.id.bullet_item_edit);
@@ -22,6 +28,11 @@ public class BulletItemView extends BaseItemView<BulletItem>
     protected void init()
     {
         ButterKnife.bind(this);
+    }
+
+    public View getMoveHandle()
+    {
+        return mMove;
     }
 
     @Override

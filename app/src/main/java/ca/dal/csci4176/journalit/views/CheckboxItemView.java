@@ -3,7 +3,9 @@ package ca.dal.csci4176.journalit.views;
 import android.content.Context;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.view.View;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -16,6 +18,9 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
 {
     @BindView(R.id.checkbox_item_checkbox)
     CheckBox mCheck;
+
+    @BindView(R.id.item_move)
+    ImageView mMove;
 
     private CheckboxItem mItem;
     private Realm mRealm;
@@ -34,6 +39,11 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
             mRealm.executeTransaction(r -> mItem.setChecked(isChecked));
             updateStrikethrough(isChecked);
         });
+    }
+
+    public View getMoveHandle()
+    {
+        return mMove;
     }
 
     @Override
@@ -67,6 +77,7 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
     @Override
     public void bindToItem(CheckboxItem item)
     {
+        Timber.d("Binding to checkbox item");
         mItem = item;
         updateFromItem();
     }

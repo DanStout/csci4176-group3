@@ -6,7 +6,7 @@ import android.support.annotation.LayoutRes;
 import android.text.Editable;
 import android.view.KeyEvent;
 import android.widget.EditText;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
@@ -16,7 +16,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.realm.RealmObject;
 import timber.log.Timber;
 
-public abstract class BaseItemView<T extends RealmObject> extends RelativeLayout
+public abstract class BaseItemView<T extends RealmObject> extends LinearLayout
 {
     protected EditText mEditTxt;
     protected boolean callingSetText;

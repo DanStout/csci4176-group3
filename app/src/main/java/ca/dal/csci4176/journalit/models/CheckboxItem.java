@@ -2,7 +2,7 @@ package ca.dal.csci4176.journalit.models;
 
 import io.realm.RealmObject;
 
-public class CheckboxItem extends RealmObject
+public class CheckboxItem extends RealmObject implements TextItem
 {
     private String text;
     private boolean isChecked;
