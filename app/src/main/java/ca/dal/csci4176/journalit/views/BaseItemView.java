@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.IdRes;
 import android.support.annotation.LayoutRes;
 import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -19,9 +20,13 @@ import timber.log.Timber;
 public abstract class BaseItemView<T extends RealmObject> extends LinearLayout
 {
     protected EditText mEditTxt;
-    protected boolean callingSetText;
 
-    private static final int TEXT_SAVE_DELAY_MILLIS = 500;
+    /**
+     * If no changes happen to the EditText after this time, its value will be saved to realm
+     **/
+    private static final int TEXT_SAVE_DELAY_MILLIS = 200;
+
+    protected long mEditTextLastChangedAt;
 
     private EnterListener mEnterListener;
     private DeleteListener mDeleteListener;
@@ -63,7 +68,7 @@ public abstract class BaseItemView<T extends RealmObject> extends LinearLayout
             if (event.getAction() == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DEL &&
                     mDeleteListener != null && mEditTxt.getSelectionStart() == 0)
             {
-                saveText();
+                saveText(mEditTxt.getText().toString());
                 mDeleteListener.onDeleteAtStart();
                 return true;
             }
@@ -75,29 +80,41 @@ public abstract class BaseItemView<T extends RealmObject> extends LinearLayout
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(evt ->
                 {
-                    if (!callingSetText)
-                    {
-                        saveText();
-                    }
+                    Timber.d("Debounced after text changed: saving text ");
+                    saveText(evt.editable().toString());
                 });
 
-        RxTextView.afterTextChangeEvents(mEditTxt)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(evt ->
+        mEditTxt.addTextChangedListener(new TextWatcher()
+        {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after)
+            {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count)
+            {
+                mEditTextLastChangedAt = Math.max(mEditTextLastChangedAt, System.nanoTime());
+                Timber.d("EditTextLastChangedAt: %d", mEditTextLastChangedAt);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s)
+            {
+                Timber.d("Text changed to: '%s'", s.toString());
+                int i = s.toString().indexOf('\n');
+                if (i != -1)
                 {
-                    Editable s = evt.editable();
-                    Timber.d("Text changed to: %s", s.toString());
-                    int i = s.toString().indexOf('\n');
-                    if (i != -1)
+                    s.delete(i, i + 1);
+                    if (mEnterListener != null)
                     {
-                        s.delete(i, i + 1);
-                        if (mEnterListener != null)
-                        {
-                            saveText();
-                            mEnterListener.onEnterPressed(mEditTxt.getSelectionStart());
-                        }
+                        saveText(s.toString());
+                        mEnterListener.onEnterPressed(mEditTxt.getSelectionStart());
                     }
-                });
+                }
+            }
+        });
 
         init();
     }
@@ -114,5 +131,5 @@ public abstract class BaseItemView<T extends RealmObject> extends LinearLayout
     /**
      * Save the contents of the EditText to Realm
      */
-    protected abstract void saveText();
+    protected abstract void saveText(String text);
 }

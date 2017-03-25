@@ -47,14 +47,13 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
     }
 
     @Override
-    protected void saveText()
+    protected void saveText(String txt)
     {
         if (!mItem.isValid())
         {
             return;
         }
 
-        String txt = mEditTxt.getText().toString();
         Timber.d("Saving text to checkbox item: '%s'", txt);
         mRealm.executeTransaction(r -> mItem.setText(txt));
     }
@@ -85,22 +84,27 @@ public class CheckboxItemView extends BaseItemView<CheckboxItem>
     @Override
     public void updateFromItem()
     {
+        Timber.d("Updating checkbox item");
         if (!mItem.isValid())
         {
             return;
         }
 
-        Timber.d("Updating checkbox item");
         mCheck.setChecked(mItem.isChecked());
-
-        if (!mEditTxt.getText().toString().equals(mItem.getText()))
-        {
-            callingSetText = true;
-            mEditTxt.setText(mItem.getText());
-            callingSetText = false;
-        }
-
         updateStrikethrough(mItem.isChecked());
+
+        String saved = mItem.getText();
+        String ui = mEditTxt.getText().toString();
+        boolean isSame = saved.equals(ui);
+        boolean savedValueChangedMoreRecently = mItem.getTextLastChangedAt() > mEditTextLastChangedAt;
+        Timber.d("TextLastChangedAt: %d, EditTextLastChangedAt: %d", mItem.getTextLastChangedAt(), mEditTextLastChangedAt);
+        Timber.d("Checkbox item changed. Saved text: '%s', UI text: '%s', is same: %s, saved changed more recently: %s", saved, ui, isSame, savedValueChangedMoreRecently);
+
+        if (!isSame && savedValueChangedMoreRecently)
+        {
+            Timber.d("Setting text!");
+            mEditTxt.setText(saved);
+        }
     }
 
     /**

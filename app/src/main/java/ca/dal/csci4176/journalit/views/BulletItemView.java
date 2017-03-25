@@ -36,14 +36,13 @@ public class BulletItemView extends BaseItemView<BulletItem>
     }
 
     @Override
-    protected void saveText()
+    protected void saveText(String txt)
     {
         if (!mItem.isValid())
         {
             return;
         }
 
-        String txt = mEditTxt.getText().toString();
         Timber.d("Saving text to bullet item: '%s'", txt);
         mRealm.executeTransaction(r -> mItem.setText(txt));
     }
@@ -58,18 +57,23 @@ public class BulletItemView extends BaseItemView<BulletItem>
     @Override
     public void updateFromItem()
     {
+        Timber.d("Updating bullet item");
         if (!mItem.isValid())
         {
             return;
         }
 
-        Timber.d("Updating bullet item");
+        String saved = mItem.getText();
+        String ui = mEditTxt.getText().toString();
+        boolean isSame = saved.equals(ui);
+        boolean savedValueChangedMoreRecently = mItem.getTextLastChangedAt() > mEditTextLastChangedAt;
+        Timber.d("TextLastChangedAt: %d, EditTextLastChangedAt: %d", mItem.getTextLastChangedAt(), mEditTextLastChangedAt);
+        Timber.d("Bullet item changed. Saved text: '%s', UI text: '%s', is same: %s, saved changed more recently: %s", saved, ui, isSame, savedValueChangedMoreRecently);
 
-        if (!mEditTxt.getText().toString().equals(mItem.getText()))
+        if (!isSame && savedValueChangedMoreRecently)
         {
-            callingSetText = true;
-            mEditTxt.setText(mItem.getText());
-            callingSetText = false;
+            Timber.d("Setting text!");
+            mEditTxt.setText(saved);
         }
     }
 }

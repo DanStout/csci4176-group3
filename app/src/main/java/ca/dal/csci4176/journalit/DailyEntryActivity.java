@@ -207,12 +207,14 @@ public class DailyEntryActivity extends AppCompatActivity
         {
             for (int pos : changeSet.getInsertions())
             {
+                Timber.d("Bullet inserted at %d", pos);
                 BulletItem item = col.get(pos);
                 addBulletItem(item, pos, true);
             }
 
             for (int pos : changeSet.getDeletions())
             {
+                Timber.d("Bullet %d removed", pos);
                 mNoteCont.removeViewAt(pos);
                 int next = pos == 0 ? pos + 1 : pos - 1;
                 mNoteCont.getChildAt(next).requestFocus();
@@ -242,12 +244,14 @@ public class DailyEntryActivity extends AppCompatActivity
         {
             for (int pos : changeSet.getInsertions())
             {
+                Timber.d("Checkbox inserted at %d", pos);
                 CheckboxItem item = col.get(pos);
                 addCheckboxItem(item, pos, true);
             }
 
             for (int pos : changeSet.getDeletions())
             {
+                Timber.d("Checkbox %d deleted", pos);
                 mTaskCont.removeViewAt(pos);
                 int next = pos == 0 ? pos + 1 : pos - 1;
                 mTaskCont.getChildAt(next).requestFocus();
@@ -394,7 +398,14 @@ public class DailyEntryActivity extends AppCompatActivity
     protected void onDestroy()
     {
         super.onDestroy();
+
+        // TODO: If we add listeners outside of DailyEntryActivity this could be problematic
+        mEntry.getNotes().removeAllChangeListeners();
+        mEntry.getTasks().removeAllChangeListeners();
+
         mRealm.close();
+
+
     }
 
     private boolean load(String s, boolean defaultVal)

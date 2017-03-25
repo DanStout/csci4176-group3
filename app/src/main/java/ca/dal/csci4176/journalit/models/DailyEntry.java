@@ -25,6 +25,8 @@ public class DailyEntry extends RealmObject
 
     private int steps;
 
+
+
     private RealmList<BulletItem> notes;
 
     private RealmList<CheckboxItem> tasks;
