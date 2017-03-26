@@ -77,6 +77,7 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
                 {
                     Bitmap thumb = ThumbnailUtils.extractThumbnail(full, 150, 150);
                     picture.setImageBitmap(thumb);
+                    picture.setVisibility(View.VISIBLE);
                     return;
                 }
             }
