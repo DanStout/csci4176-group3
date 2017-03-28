@@ -31,7 +31,7 @@ public class Journalit extends Application
                 .build();
 
         Realm.setDefaultConfiguration(config);
-        Realm.deleteRealm(config);
+//        Realm.deleteRealm(config);
 
         DailyStepService.enableChecking(this);
     }

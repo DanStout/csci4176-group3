@@ -23,6 +23,13 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.jmedeisis.draglinearlayout.DragLinearLayout;
 
 import org.threeten.bp.LocalDateTime;
@@ -45,8 +52,7 @@ import ca.dal.csci4176.journalit.views.CheckboxItemView;
 import io.realm.Realm;
 import timber.log.Timber;
 
-public class DailyEntryActivity extends AppCompatActivity
-{
+public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyCallback {
     private static final DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
     private static final String EXTRA_ENTRY_ID = "entry_id";
     private static final int REQ_TAKE_PHOTO = 1;
@@ -88,8 +94,7 @@ public class DailyEntryActivity extends AppCompatActivity
     @BindView(R.id.entry_steps)
     TextView mTxtSteps;
 
-    @BindView(R.id.entry_location)
-    TextView mTxtLocation;
+    SupportMapFragment mMap;
 
     @OnClick(R.id.entry_no_photo_container)
     public void takePhoto()
@@ -171,7 +176,8 @@ public class DailyEntryActivity extends AppCompatActivity
         setTitle(mEntry.getDateFormatted());
         mTxtSteps.setText(String.valueOf(mEntry.getSteps()));
 
-        mTxtLocation.setText(String.format(Locale.CANADA, "%f, %f", mEntry.getLatitude(), mEntry.getLongitude()));
+        mMap = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mMap.getMapAsync(this);
 
         Timber.d("Found mood: %s", mEntry.getMood());
 
@@ -401,6 +407,7 @@ public class DailyEntryActivity extends AppCompatActivity
         mPhoto.setImageBitmap(bitmap);
         mNoPhotoCont.setVisibility(View.GONE);
         mPhoto.setVisibility(View.VISIBLE);
+        mPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
     }
 
     @Override
@@ -472,11 +479,22 @@ public class DailyEntryActivity extends AppCompatActivity
         }
         if (showlocation)
         {
-            mTxtLocation.setVisibility(View.VISIBLE);
+            mMap.getView().setVisibility(View.VISIBLE);
         }
         else
         {
-            mTxtLocation.setVisibility(View.GONE);
+            mMap.getView().setVisibility(View.GONE);
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        LatLng loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
+        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc , 16);
+
+        googleMap.addMarker(new MarkerOptions().position(loc)
+                .title(mEntry.getDateFormatted()));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
+        googleMap.animateCamera(cUp);
     }
 }
