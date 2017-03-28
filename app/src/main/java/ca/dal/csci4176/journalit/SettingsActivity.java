@@ -19,7 +19,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
 
     private Toolbar mToolbar;
     private ToggleButton location;
-    private CheckBox note, task;
+    private CheckBox note, task, mood, step;
     private Button button;
 
     @Override
@@ -31,6 +31,8 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         location = (ToggleButton) findViewById(R.id.tb);
         note = (CheckBox) findViewById(R.id.note);
         task = (CheckBox) findViewById(R.id.task);
+        mood = (CheckBox) findViewById(R.id.mood);
+        step = (CheckBox) findViewById(R.id.step);
         button = (Button) findViewById(R.id.button);
         button.setOnClickListener(this);
         mToolbar.setTitle("SettingsActivity");
@@ -52,6 +54,8 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         super.onResume();
         note.setChecked(load("note", true));
         task.setChecked(load("task", true));
+        mood.setChecked(load("mood", true));
+        step.setChecked(load("step", true));
         location.setChecked(load("location", true));
     }
 
@@ -72,6 +76,8 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         if (view.getId() == R.id.button) {
             save("note", note.isChecked());
             save("task", task.isChecked());
+            save("mood", mood.isChecked());
+            save("step", step.isChecked());
             save("location", location.isChecked());
             Intent i = new Intent(SettingsActivity.this, MainActivity.class);
             startActivity(i);

@@ -70,6 +70,15 @@ public class DailyEntryActivity extends AppCompatActivity
     @BindView(R.id.entry_tasks)
     TextView mTask;
 
+    @BindView(R.id.mood_title)
+    TextView mMoodTitle;
+
+    @BindView(R.id.mood_spinner)
+    Spinner mMoodSpinner;
+
+    @BindView(R.id.entry_step_container)
+    LinearLayout mStepCont;
+
     @BindView(R.id.entry_no_photo_container)
     LinearLayout mNoPhotoCont;
 
@@ -420,6 +429,9 @@ public class DailyEntryActivity extends AppCompatActivity
         super.onResume();
         boolean shownote = load("note", true);
         boolean showtask = load("task", true);
+        boolean showmood = load("mood", true);
+        boolean showstep = load("step", true);
+        boolean showlocation = load("location", true);
         if (shownote)
         {
             mNoteCont.setVisibility(View.VISIBLE);
@@ -439,6 +451,32 @@ public class DailyEntryActivity extends AppCompatActivity
         {
             mTaskCont.setVisibility(View.GONE);
             mTask.setVisibility(View.GONE);
+        }
+        if (showmood)
+        {
+            mMoodTitle.setVisibility(View.VISIBLE);
+            mMoodSpinner.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mMoodTitle.setVisibility(View.GONE);
+            mMoodSpinner.setVisibility(View.GONE);
+        }
+        if (showstep)
+        {
+            mStepCont.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mStepCont.setVisibility(View.GONE);
+        }
+        if (showlocation)
+        {
+            mTxtLocation.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mTxtLocation.setVisibility(View.GONE);
         }
     }
 }
