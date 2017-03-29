@@ -523,9 +523,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
         CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc , 16);
 
-        loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
-        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc, 16);
-
         googleMap.addMarker(new MarkerOptions().position(loc)
                 .title(mEntry.getDateFormatted()));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
