@@ -72,6 +72,8 @@
                 android:layout_height="wrap_content"
                 />
 
+            <include layout="@layout/numerical_section" android:id="@+id/caffeine"/>
+            <include layout="@layout/numerical_section" android:id="@+id/water"/>
 
             <LinearLayout
                 android:id="@+id/entry_step_container"

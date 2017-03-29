@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
@@ -23,6 +22,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -50,7 +50,6 @@ import org.threeten.bp.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -111,6 +110,12 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
     @BindView(R.id.entry_steps)
     TextView mTxtSteps;
+
+    @BindView(R.id.caffeine)
+    View mCaffeine;
+
+    @BindView(R.id.water)
+    View mWater;
 
     SupportMapFragment mMap;
 
@@ -197,6 +202,12 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
         mMap = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMap.getMapAsync(this);
+
+        ((TextView) mCaffeine.findViewById(R.id.title)).setText("Caffeine Servings: ");
+        ((EditText) mCaffeine.findViewById(R.id.num_val)).setText(String.valueOf(mEntry.getCaffeine()));
+
+        ((TextView) mWater.findViewById(R.id.title)).setText("Water Servings: ");
+        ((EditText) mWater.findViewById(R.id.num_val)).setText(String.valueOf(mEntry.getWater()));
 
         Timber.d("Found mood: %s", mEntry.getMood());
 
@@ -310,6 +321,21 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             Timber.d("Checkbox moved: %d -> %d", firstPosition, secondPosition);
             mRealm.executeTransaction(r -> mEntry.getTasks().move(firstPosition, secondPosition));
         });
+    }
+    @Override
+    public void onPause(){
+        super.onPause();
+
+        EditText cafe_val = (EditText) mCaffeine.findViewById(R.id.num_val);
+        int cafe = Integer.parseInt(String.valueOf(cafe_val.getText()));
+
+        EditText water_val = (EditText) mWater.findViewById(R.id.num_val);
+        int water = Integer.parseInt(String.valueOf(water_val.getText()));
+
+        mRealm.beginTransaction();
+        mEntry.setCaffeine(cafe);
+        mEntry.setWater(water);
+        mRealm.commitTransaction();
     }
 
     private void addCheckboxItem(CheckboxItem item, int pos, boolean doFocus)
@@ -608,5 +634,21 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                     }
                 })
                 .check();
+    }
+
+
+
+    public void incrementValue(View view) {
+        View parent = (View) view.getParent();
+        EditText val = (EditText) parent.findViewById(R.id.num_val);
+        val.setText(String.valueOf(Integer.parseInt(String.valueOf(val.getText()))+1));
+    }
+    public void decrementValue(View view) {
+        View parent = (View) view.getParent();
+        EditText val = (EditText) parent.findViewById(R.id.num_val);
+        int n = Integer.parseInt(String.valueOf(val.getText()));
+        if (n > 0) {
+            val.setText(String.valueOf(Integer.parseInt(String.valueOf(val.getText()))-1));
+        }
     }
 }

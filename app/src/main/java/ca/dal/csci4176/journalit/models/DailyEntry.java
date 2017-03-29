@@ -53,6 +53,10 @@ public class DailyEntry extends RealmObject
 
     private MoodItem mood;
 
+    private int caffeine;
+
+    private int water;
+
     public static long getKeyOfToday()
     {
         LocalDate now = LocalDate.now();
@@ -119,6 +123,22 @@ public class DailyEntry extends RealmObject
     public void setMood(MoodItem mood)
     {
         this.mood = mood;
+    }
+
+    public int getCaffeine() {
+        return caffeine;
+    }
+
+    public void setCaffeine(int caffeine) {
+        this.caffeine = caffeine;
+    }
+
+    public int getWater() {
+        return water;
+    }
+
+    public void setWater(int water) {
+        this.water = water;
     }
 
     @Override
