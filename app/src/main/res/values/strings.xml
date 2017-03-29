@@ -15,4 +15,6 @@
     <string name="explain_google_acc">Journalit can fetch information from Google Fit. Would you like to select which Google account your data should come from?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="menu_export">Export</string>
+    <string name="export_message">Export Data</string>
 </resources>

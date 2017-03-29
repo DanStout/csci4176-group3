@@ -23,6 +23,7 @@ import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.fitness.Fitness;
+import com.google.gson.Gson;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
@@ -78,9 +79,7 @@ public class MainActivity extends AppCompatActivity
 
         mRealm = Realm.getDefaultInstance();
 
-        RealmResults<DailyEntry> entries = mRealm
-                .where(DailyEntry.class)
-                .findAllSorted("key", Sort.DESCENDING);
+        RealmResults<DailyEntry> entries = getEntries();
 
         RVAdapter adapter = new RVAdapter(this, entries);
         mRecycler.setAdapter(adapter);
@@ -116,6 +115,13 @@ public class MainActivity extends AppCompatActivity
         }
 
         return ent;
+    }
+
+    private RealmResults<DailyEntry> getEntries()
+    {
+        return mRealm
+                .where(DailyEntry.class)
+                .findAllSorted("key", Sort.DESCENDING);
     }
 
     private void saveCreationLocationForEntry(DailyEntry ent)
@@ -261,11 +267,12 @@ public class MainActivity extends AppCompatActivity
     {
         switch (item.getItemId())
         {
+            case R.id.menu_export:
+                exportData();
+                break;
             case R.id.menu_edit:
                 Timber.d("Edit");
-                break;
-            case R.id.menu_share:
-                Timber.d("Share");
+                addEntries();
                 break;
             case R.id.menu_settings:
                 Timber.d("Settings");
@@ -274,6 +281,46 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void exportData()
+    {
+        RealmResults<DailyEntry> entries = getEntries();
+        Gson g = new Gson();
+        String text = g.toJson(mRealm.copyFromRealm(entries));
+
+        Intent in = new Intent();
+        in.setAction(Intent.ACTION_SEND);
+        in.putExtra(Intent.EXTRA_TEXT, text);
+        in.setType("text/plain");
+        startActivity(Intent.createChooser(in, getResources().getText(R.string.export_message)));
+    }
+
+    private void addEntries()
+    {
+        LocalDate day = LocalDate.now();
+        mRealm.beginTransaction();
+        for (int i = 0; i < 7; i++)
+        {
+            DailyEntry ent = new DailyEntry();
+            ent.setDate(day);
+            day = day.minusDays(1);
+
+            ent = mRealm.copyToRealmOrUpdate(ent);
+
+            BulletItem note1 = new BulletItem("I drank 1500 litres of coffee today");
+            BulletItem note2 = new BulletItem("I saw my nemesis on the bus");
+
+            CheckboxItem task1 = new CheckboxItem("Take out the garbage", false);
+            CheckboxItem task2 = new CheckboxItem("Learn to speak Korean", false);
+
+            ent.getNotes().add(note1);
+            ent.getNotes().add(note2);
+
+            ent.getTasks().add(task1);
+            ent.getTasks().add(task2);
+        }
+        mRealm.commitTransaction();
     }
 
     @Override
