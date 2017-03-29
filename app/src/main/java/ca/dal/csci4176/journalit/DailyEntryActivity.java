@@ -382,8 +382,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             int loc = mEntry.getNotes().indexOf(item) + 1;
 
-            if (mPrefs.isLocationEnabled())
-            {
+            if (mPrefs.isLocationEnabled()) {
                 pullLocationOnce();
             }
 
@@ -391,8 +390,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             item.setText(newText);
             BulletItem newItem = mRealm.createObject(BulletItem.class);
             newItem.setText(selText);
-            if (mPrefs.isLocationEnabled())
-            {
+            if (mPrefs.isLocationEnabled()) {
                 newItem.setEntryLat(bulLat);
                 newItem.setEntryLong(bulLong);
             }
@@ -511,19 +509,19 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap)
-    {
+    public void onMapReady(GoogleMap googleMap) {
         LatLng loc;
-        for (int i = 0; i < mEntry.getNotes().size(); i++)
-        {
+        for (int i = 0; i < mEntry.getNotes().size(); i++) {
             BulletItem hold = mEntry.getNotes().get(i);
-            if (Double.isNaN(hold.getEntryLat()) || Double.isNaN(hold.getEntryLong()))
-            {
+            if (Double.isNaN(hold.getEntryLat()) || Double.isNaN(hold.getEntryLong())) {
                 loc = new LatLng(hold.getEntryLat(), hold.getEntryLong());
                 googleMap.addMarker(new MarkerOptions().position(loc)
                         .title(hold.getText()));
             }
         }
+
+        loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
+        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc , 16);
 
         loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
         CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc, 16);
@@ -534,8 +532,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         googleMap.animateCamera(cUp);
     }
 
-    private void pullLocationOnce()
-    {
+    private void pullLocationOnce() {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria gpsConf = new Criteria();
         gpsConf.setAccuracy(Criteria.ACCURACY_FINE);

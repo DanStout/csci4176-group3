@@ -17,8 +17,8 @@ public class BulletItem extends RealmObject implements TextItem
     public BulletItem(String text, LatLng loc)
     {
         setText(text);
-        this.latitude = loc.latitude;
-        this.longitude = loc.longitude;
+        setEntryLat(loc.latitude);
+        setEntryLong(loc.longitude);
     }
 
     /**
@@ -37,7 +37,7 @@ public class BulletItem extends RealmObject implements TextItem
     public void setText(String text)
     {
         textLastChangedAt = System.nanoTime();
-        Timber.d("TextLastChangedAt: %d", textLastChangedAt);
+        Timber.d("TextLastChangedAt: %s", textLastChangedAt);
         this.text = text;
     }
 
@@ -47,6 +47,7 @@ public class BulletItem extends RealmObject implements TextItem
 
     public void setEntryLat(double lat) {
         this.latitude = lat;
+        Timber.d("Latitude changed: %s", lat);
     }
 
     public double getEntryLong() {
@@ -55,6 +56,7 @@ public class BulletItem extends RealmObject implements TextItem
 
     public void setEntryLong(double lon) {
         this.longitude = lon;
+        Timber.d("Longitude changed: %s", lon);
     }
 
     /**
