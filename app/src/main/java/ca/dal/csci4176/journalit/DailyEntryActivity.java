@@ -52,7 +52,8 @@ import ca.dal.csci4176.journalit.views.CheckboxItemView;
 import io.realm.Realm;
 import timber.log.Timber;
 
-public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyCallback
+{
     private static final DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
     private static final String EXTRA_ENTRY_ID = "entry_id";
     private static final int REQ_TAKE_PHOTO = 1;
@@ -61,6 +62,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     private Realm mRealm;
     private File mPhotoFile;
     private Prefs mPrefs;
+    private Drawable mBackDraw;
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -143,7 +145,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         return in;
     }
 
-    private Drawable mBackDraw;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -484,9 +485,10 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(GoogleMap googleMap)
+    {
         LatLng loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
-        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc , 16);
+        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc, 16);
 
         googleMap.addMarker(new MarkerOptions().position(loc)
                 .title(mEntry.getDateFormatted()));
