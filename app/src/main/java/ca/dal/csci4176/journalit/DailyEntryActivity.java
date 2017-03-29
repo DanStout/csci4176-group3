@@ -1,5 +1,6 @@
 package ca.dal.csci4176.journalit;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,10 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -14,6 +19,7 @@ import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -23,6 +29,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -31,6 +38,12 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.jmedeisis.draglinearlayout.DragLinearLayout;
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionDeniedResponse;
+import com.karumi.dexter.listener.PermissionGrantedResponse;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.single.PermissionListener;
 
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
@@ -57,6 +70,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     private static final DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
     private static final String EXTRA_ENTRY_ID = "entry_id";
     private static final int REQ_TAKE_PHOTO = 1;
+
+    private static double bulLat, bulLong;
 
     private DailyEntry mEntry;
     private Realm mRealm;
@@ -367,10 +382,20 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             int loc = mEntry.getNotes().indexOf(item) + 1;
 
+            if (mPrefs.isLocationEnabled())
+            {
+                pullLocationOnce();
+            }
+
             mRealm.beginTransaction();
             item.setText(newText);
             BulletItem newItem = mRealm.createObject(BulletItem.class);
             newItem.setText(selText);
+            if (mPrefs.isLocationEnabled())
+            {
+                newItem.setEntryLat(bulLat);
+                newItem.setEntryLong(bulLong);
+            }
             mEntry.getNotes().add(loc, newItem);
             mRealm.commitTransaction();
         });
@@ -474,6 +499,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             mStepCont.setVisibility(View.GONE);
         }
 
+        Timber.d("Location enabled: %s, Has Location: %s", mPrefs.isLocationEnabled(), mEntry.hasLocation());
         if (mPrefs.isLocationEnabled() && mEntry.hasLocation())
         {
             mMap.getView().setVisibility(View.VISIBLE);
@@ -487,12 +513,106 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
-        LatLng loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
+        LatLng loc;
+        for (int i = 0; i < mEntry.getNotes().size(); i++)
+        {
+            BulletItem hold = mEntry.getNotes().get(i);
+            if (Double.isNaN(hold.getEntryLat()) || Double.isNaN(hold.getEntryLong()))
+            {
+                loc = new LatLng(hold.getEntryLat(), hold.getEntryLong());
+                googleMap.addMarker(new MarkerOptions().position(loc)
+                        .title(hold.getText()));
+            }
+        }
+
+        loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
         CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc, 16);
 
         googleMap.addMarker(new MarkerOptions().position(loc)
                 .title(mEntry.getDateFormatted()));
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
         googleMap.animateCamera(cUp);
+    }
+
+    private void pullLocationOnce()
+    {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        Criteria gpsConf = new Criteria();
+        gpsConf.setAccuracy(Criteria.ACCURACY_FINE);
+        gpsConf.setPowerRequirement(Criteria.POWER_MEDIUM);
+        gpsConf.setAltitudeRequired(false);
+        gpsConf.setSpeedRequired(false);
+        gpsConf.setBearingRequired(false);
+        gpsConf.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
+
+        LocationListener locationListener = new LocationListener()
+        {
+            @Override
+            public void onLocationChanged(Location location)
+            {
+                Log.d("Location Changed.", location.toString());
+                bulLat = location.getLatitude();
+                bulLong = location.getLongitude();
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras)
+            {
+                Log.d("Status Changed.", String.valueOf(status));
+            }
+
+            @Override
+            public void onProviderEnabled(String provider)
+            {
+                Log.d("Provider Enabled", provider);
+            }
+
+            @Override
+            public void onProviderDisabled(String provider)
+            {
+                Log.d("Provider Disabled", provider);
+            }
+        };
+
+        Dexter.withActivity(this)
+                .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
+                .withListener(new PermissionListener()
+                {
+                    @Override
+                    public void onPermissionGranted(PermissionGrantedResponse response)
+                    {
+                        Timber.d("Permission granted");
+                        //noinspection MissingPermission
+                        locationManager.requestSingleUpdate(gpsConf, locationListener, null);
+                    }
+
+                    @Override
+                    public void onPermissionDenied(PermissionDeniedResponse response)
+                    {
+                        Timber.d("Permission denied");
+                    }
+
+                    @Override
+                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token)
+                    {
+                        Timber.d("Showing rationale..");
+                        new MaterialDialog.Builder(DailyEntryActivity.this)
+                                .content(R.string.rationale_location)
+                                .positiveText(R.string.OK)
+                                .negativeText(R.string.no_thanks)
+                                .onPositive((dialog, which) ->
+                                {
+                                    Timber.d("Continuing with permission request");
+                                    token.continuePermissionRequest();
+                                })
+                                .onNegative((dialog, which) ->
+                                {
+                                    Timber.d("Cancelling permission request");
+                                    token.cancelPermissionRequest();
+                                })
+                                .show();
+                    }
+                })
+                .check();
     }
 }
