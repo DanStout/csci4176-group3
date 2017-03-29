@@ -1,12 +1,14 @@
 package ca.dal.csci4176.journalit;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -17,6 +19,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.common.Scopes;
@@ -24,14 +27,20 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.fitness.Fitness;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionDeniedResponse;
 import com.karumi.dexter.listener.PermissionGrantedResponse;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.single.PermissionListener;
+import com.nononsenseapps.filepicker.FilePickerActivity;
 
 import org.threeten.bp.LocalDate;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -45,6 +54,8 @@ import timber.log.Timber;
 
 public class MainActivity extends AppCompatActivity
 {
+    private static final int REQ_EXPORT_NEW_FILE = 0;
+
     @BindView(R.id.main_fab)
     FloatingActionButton mFab;
 
@@ -268,11 +279,11 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId())
         {
             case R.id.menu_export:
-                exportData();
+                chooseExportDataFile();
                 break;
-            case R.id.menu_edit:
-                Timber.d("Edit");
-                addEntries();
+            case R.id.menu_demo:
+                Timber.d("Demo");
+                addDemoEntries();
                 break;
             case R.id.menu_settings:
                 Timber.d("Settings");
@@ -283,20 +294,48 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void exportData()
+    private void chooseExportDataFile()
     {
-        RealmResults<DailyEntry> entries = getEntries();
-        Gson g = new Gson();
-        String text = g.toJson(mRealm.copyFromRealm(entries));
-
-        Intent in = new Intent();
-        in.setAction(Intent.ACTION_SEND);
-        in.putExtra(Intent.EXTRA_TEXT, text);
-        in.setType("text/plain");
-        startActivity(Intent.createChooser(in, getResources().getText(R.string.export_message)));
+        Intent i = new Intent(this, FilePickerActivity.class);
+        i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_NEW_FILE);
+        startActivityForResult(i, REQ_EXPORT_NEW_FILE);
     }
 
-    private void addEntries()
+    private void exportDataToFile(Uri contentUri)
+    {
+
+        try(
+                OutputStream out = getContentResolver().openOutputStream(contentUri);
+                PrintWriter writer = new PrintWriter(out))
+        {
+            RealmResults<DailyEntry> entries = getEntries();
+            Gson g = new GsonBuilder().setPrettyPrinting().create();
+            String text = g.toJson(mRealm.copyFromRealm(entries));
+            writer.write(text);
+            Toast.makeText(this, R.string.export_success, Toast.LENGTH_LONG).show();
+        }
+        catch (IOException e)
+        {
+            Timber.w(e, "Failed to export data");
+            Toast.makeText(this, R.string.export_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        switch (requestCode)
+        {
+            case REQ_EXPORT_NEW_FILE:
+                if (resultCode != Activity.RESULT_OK) return;
+                exportDataToFile(data.getData());
+                return;
+            default:
+                super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void addDemoEntries()
     {
         LocalDate day = LocalDate.now();
         mRealm.beginTransaction();

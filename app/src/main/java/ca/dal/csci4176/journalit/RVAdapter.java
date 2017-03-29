@@ -2,7 +2,6 @@ package ca.dal.csci4176.journalit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +15,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
+import ca.dal.csci4176.journalit.utils.BitmapUtils;
 import io.realm.OrderedRealmCollection;
 import io.realm.RealmList;
 import io.realm.RealmRecyclerViewAdapter;
@@ -72,10 +72,11 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
         {
             if (path != null)
             {
-                Bitmap full = BitmapFactory.decodeFile(path);
+                int w = 150;
+                Bitmap full = BitmapUtils.decodeSubsampledBitmap(path, w, w);
                 if (full != null)
                 {
-                    Bitmap thumb = ThumbnailUtils.extractThumbnail(full, 150, 150);
+                    Bitmap thumb = ThumbnailUtils.extractThumbnail(full, w, w);
                     picture.setImageBitmap(thumb);
                     picture.setVisibility(View.VISIBLE);
                     return;

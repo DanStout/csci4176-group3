@@ -5,7 +5,6 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.location.Criteria;
 import android.location.Location;
@@ -59,6 +58,8 @@ import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import ca.dal.csci4176.journalit.models.Mood;
 import ca.dal.csci4176.journalit.models.MoodItem;
+import ca.dal.csci4176.journalit.utils.BitmapUtils;
+import ca.dal.csci4176.journalit.utils.ViewUtils;
 import ca.dal.csci4176.journalit.views.BulletItemView;
 import ca.dal.csci4176.journalit.views.CheckboxItemView;
 import io.realm.Realm;
@@ -135,7 +136,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         }
 
         Uri imgUri = FileProvider.getUriForFile(this,
-                BuildConfig.APPLICATION_ID + ".fileprovider", mPhotoFile);
+                BuildConfig.APPLICATION_ID + ".provider", mPhotoFile);
         in.putExtra(MediaStore.EXTRA_OUTPUT, imgUri);
         ClipData clip = ClipData.newUri(getContentResolver(), "Photo", imgUri);
         in.setClipData(clip);
@@ -164,7 +165,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         in.putExtra(EXTRA_ENTRY_ID, entry.getKey());
         return in;
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -198,6 +198,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
+        setPhotoFromEntry();
         mTxtSteps.setText(String.valueOf(mEntry.getSteps()));
 
         mMap = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -241,12 +242,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             {
             }
         });
-
-        Bitmap photo = BitmapFactory.decodeFile(mEntry.getPhotoPath());
-        if (photo != null)
-        {
-            setPhoto(photo);
-        }
 
         mEntry.getNotes().addChangeListener((col, changeSet) ->
         {
@@ -322,8 +317,10 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             mRealm.executeTransaction(r -> mEntry.getTasks().move(firstPosition, secondPosition));
         });
     }
+
     @Override
-    public void onPause(){
+    public void onPause()
+    {
         super.onPause();
 
         EditText cafe_val = (EditText) mCaffeine.findViewById(R.id.num_val);
@@ -408,7 +405,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             int loc = mEntry.getNotes().indexOf(item) + 1;
 
-            if (mPrefs.isLocationEnabled()) {
+            if (mPrefs.isLocationEnabled())
+            {
                 pullLocationOnce();
             }
 
@@ -416,7 +414,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             item.setText(newText);
             BulletItem newItem = mRealm.createObject(BulletItem.class);
             newItem.setText(selText);
-            if (mPrefs.isLocationEnabled()) {
+            if (mPrefs.isLocationEnabled())
+            {
                 newItem.setEntryLat(bulLat);
                 newItem.setEntryLong(bulLong);
             }
@@ -450,17 +449,46 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         {
             Timber.d("File path: %s", mPhotoFile.getPath());
             mRealm.executeTransaction(r -> mEntry.setPhotoPath(mPhotoFile.getPath()));
-            Bitmap img = BitmapFactory.decodeFile(mPhotoFile.getPath());
-            setPhoto(img);
+            setPhotoFromEntry();
         }
     }
 
-    private void setPhoto(Bitmap bitmap)
+    /**
+     * Displays photo at given path
+     * Do not call within a realm transaction
+     */
+    private void setPhotoFromEntry()
     {
-        mPhoto.setImageBitmap(bitmap);
-        mNoPhotoCont.setVisibility(View.GONE);
-        mPhoto.setVisibility(View.VISIBLE);
-        mPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        String photoPath = mEntry.getPhotoPath();
+        if (photoPath == null)
+        {
+            Timber.d("No photo path saved");
+            return;
+        }
+
+        // We can't use the dimensions of the actual imageview since it's invisible now
+        ViewUtils.getDimensions(mNoPhotoCont, (width, height) ->
+        {
+            Bitmap img = BitmapUtils.decodeSubsampledBitmap(photoPath, width, height);
+
+            if (img == null)
+            {
+                Timber.d("Photo path saved, but no longer valid: removing path");
+                if (mRealm.isInTransaction())
+                {
+                    Timber.d("Cannot remove path; already inside transaction");
+                    return;
+                }
+
+                mRealm.executeTransaction(r -> mEntry.setPhotoPath(null));
+                return;
+            }
+
+            mPhoto.setImageBitmap(img);
+            mNoPhotoCont.setVisibility(View.GONE);
+            mPhoto.setVisibility(View.VISIBLE);
+            mPhoto.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        });
     }
 
     @Override
@@ -535,11 +563,14 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(GoogleMap googleMap)
+    {
         LatLng loc;
-        for (int i = 0; i < mEntry.getNotes().size(); i++) {
+        for (int i = 0; i < mEntry.getNotes().size(); i++)
+        {
             BulletItem hold = mEntry.getNotes().get(i);
-            if (Double.isNaN(hold.getEntryLat()) || Double.isNaN(hold.getEntryLong())) {
+            if (Double.isNaN(hold.getEntryLat()) || Double.isNaN(hold.getEntryLong()))
+            {
                 loc = new LatLng(hold.getEntryLat(), hold.getEntryLong());
                 googleMap.addMarker(new MarkerOptions().position(loc)
                         .title(hold.getText()));
@@ -547,7 +578,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         }
 
         loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
-        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc , 16);
+        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc, 16);
 
         googleMap.addMarker(new MarkerOptions().position(loc)
                 .title(mEntry.getDateFormatted()));
@@ -555,7 +586,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         googleMap.animateCamera(cUp);
     }
 
-    private void pullLocationOnce() {
+    private void pullLocationOnce()
+    {
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         Criteria gpsConf = new Criteria();
         gpsConf.setAccuracy(Criteria.ACCURACY_FINE);
@@ -637,18 +669,21 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
 
-
-    public void incrementValue(View view) {
+    public void incrementValue(View view)
+    {
         View parent = (View) view.getParent();
         EditText val = (EditText) parent.findViewById(R.id.num_val);
-        val.setText(String.valueOf(Integer.parseInt(String.valueOf(val.getText()))+1));
+        val.setText(String.valueOf(Integer.parseInt(String.valueOf(val.getText())) + 1));
     }
-    public void decrementValue(View view) {
+
+    public void decrementValue(View view)
+    {
         View parent = (View) view.getParent();
         EditText val = (EditText) parent.findViewById(R.id.num_val);
         int n = Integer.parseInt(String.valueOf(val.getText()));
-        if (n > 0) {
-            val.setText(String.valueOf(Integer.parseInt(String.valueOf(val.getText()))-1));
+        if (n > 0)
+        {
+            val.setText(String.valueOf(Integer.parseInt(String.valueOf(val.getText())) - 1));
         }
     }
 }
