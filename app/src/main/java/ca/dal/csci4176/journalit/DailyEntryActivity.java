@@ -60,6 +60,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     private DailyEntry mEntry;
     private Realm mRealm;
     private File mPhotoFile;
+    private Prefs mPrefs;
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -153,6 +154,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
+
+        mPrefs = new Prefs(this);
 
         mRealm = Realm.getDefaultInstance();
 
@@ -420,26 +423,15 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         mEntry.getTasks().removeAllChangeListeners();
 
         mRealm.close();
-
-
     }
 
-    private boolean load(String s, boolean defaultVal)
-    {
-        SharedPreferences sharedPreferences = getSharedPreferences("BooleanValue", 0);
-        return sharedPreferences.getBoolean(s, defaultVal);
-    }
 
     @Override
     public void onResume()
     {
         super.onResume();
-        boolean shownote = load("note", true);
-        boolean showtask = load("task", true);
-        boolean showmood = load("mood", true);
-        boolean showstep = load("step", true);
-        boolean showlocation = load("location", true);
-        if (shownote)
+
+        if (mPrefs.doShowNotes())
         {
             mNoteCont.setVisibility(View.VISIBLE);
             mNote.setVisibility(View.VISIBLE);
@@ -449,7 +441,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             mNoteCont.setVisibility(View.GONE);
             mNote.setVisibility(View.GONE);
         }
-        if (showtask)
+
+        if (mPrefs.doShowTasks())
         {
             mTaskCont.setVisibility(View.VISIBLE);
             mTask.setVisibility(View.VISIBLE);
@@ -459,7 +452,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             mTaskCont.setVisibility(View.GONE);
             mTask.setVisibility(View.GONE);
         }
-        if (showmood)
+
+        if (mPrefs.doShowMood())
         {
             mMoodTitle.setVisibility(View.VISIBLE);
             mMoodSpinner.setVisibility(View.VISIBLE);
@@ -469,7 +463,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             mMoodTitle.setVisibility(View.GONE);
             mMoodSpinner.setVisibility(View.GONE);
         }
-        if (showstep)
+
+        if (mPrefs.doShowSteps())
         {
             mStepCont.setVisibility(View.VISIBLE);
         }
@@ -477,7 +472,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         {
             mStepCont.setVisibility(View.GONE);
         }
-        if (showlocation)
+
+        if (mPrefs.isLocationEnabled() && mEntry.hasLocation())
         {
             mMap.getView().setVisibility(View.VISIBLE);
         }

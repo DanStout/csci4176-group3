@@ -110,7 +110,10 @@ public class MainActivity extends AppCompatActivity
         ent.getTasks().add(task);
         mRealm.commitTransaction();
 
-        saveCreationLocationForEntry(ent);
+        if (mPrefs.isLocationEnabled())
+        {
+            saveCreationLocationForEntry(ent);
+        }
 
         return ent;
     }

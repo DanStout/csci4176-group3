@@ -10,22 +10,20 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.ToggleButton;
 
-
-/**
- * Created by WZ on 2017/3/23.
- */
-
 public class SettingsActivity extends AppCompatActivity implements View.OnClickListener{
 
     private Toolbar mToolbar;
     private ToggleButton location;
     private CheckBox note, task, mood, step;
     private Button button;
+    private Prefs mPrefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+
+        mPrefs = new Prefs(this);
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         location = (ToggleButton) findViewById(R.id.tb);
@@ -39,9 +37,6 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-
-
-
     }
 
     @Override
@@ -52,35 +47,22 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onResume() {
         super.onResume();
-        note.setChecked(load("note", true));
-        task.setChecked(load("task", true));
-        mood.setChecked(load("mood", true));
-        step.setChecked(load("step", true));
-        location.setChecked(load("location", true));
-    }
-
-    private void save(String s, final boolean isChecked) {
-        SharedPreferences sharedPreferences = getSharedPreferences("BooleanValue", 0);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean(s, isChecked);
-        editor.commit();
-    }
-
-    private boolean load(String s, boolean defaultVal) {
-        SharedPreferences sharedPreferences = getSharedPreferences("BooleanValue", 0);
-        return sharedPreferences.getBoolean(s, defaultVal);
+        note.setChecked(mPrefs.doShowNotes());
+        task.setChecked(mPrefs.doShowTasks());
+        mood.setChecked(mPrefs.doShowMood());
+        step.setChecked(mPrefs.doShowSteps());
+        location.setChecked(mPrefs.isLocationEnabled());
     }
 
     @Override
     public void onClick(View view) {
         if (view.getId() == R.id.button) {
-            save("note", note.isChecked());
-            save("task", task.isChecked());
-            save("mood", mood.isChecked());
-            save("step", step.isChecked());
-            save("location", location.isChecked());
-            Intent i = new Intent(SettingsActivity.this, MainActivity.class);
-            startActivity(i);
+            mPrefs.setShowNotes(note.isChecked());
+            mPrefs.setShowTasks(task.isChecked());
+            mPrefs.setShowMood(mood.isChecked());
+            mPrefs.setShowsteps(step.isChecked());
+            mPrefs.setLocationEnabled(location.isChecked());
+            finish();
         }
     }
 }

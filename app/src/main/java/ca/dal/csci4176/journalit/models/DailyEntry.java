@@ -25,8 +25,6 @@ public class DailyEntry extends RealmObject
 
     private int steps;
 
-
-
     private RealmList<BulletItem> notes;
 
     private RealmList<CheckboxItem> tasks;
@@ -65,6 +63,11 @@ public class DailyEntry extends RealmObject
     private static long getKey(Date date)
     {
         return date.getTime();
+    }
+
+    public boolean hasLocation()
+    {
+        return getLatitude() != 0  && getLongitude() != 0;
     }
 
     public RealmList<BulletItem> getNotes()
