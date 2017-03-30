@@ -350,8 +350,8 @@ public class MainActivity extends AppCompatActivity
             BulletItem note1 = new BulletItem("I drank 1500 litres of coffee today");
             BulletItem note2 = new BulletItem("I saw my nemesis on the bus");
 
-            CheckboxItem task1 = new CheckboxItem("Take out the garbage", false);
-            CheckboxItem task2 = new CheckboxItem("Learn to speak Korean", false);
+            CheckboxItem task1 = new CheckboxItem("Take out the garbage", Math.random() < 0.5);
+            CheckboxItem task2 = new CheckboxItem("Learn to speak Korean", Math.random() < 0.5);
 
             ent.getNotes().add(note1);
             ent.getNotes().add(note2);

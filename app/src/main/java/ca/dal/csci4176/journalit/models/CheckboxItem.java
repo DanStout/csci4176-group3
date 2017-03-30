@@ -10,7 +10,7 @@ public class CheckboxItem extends RealmObject implements TextItem
 
     public CheckboxItem(String text, boolean isChecked)
     {
-        this.text = text;
+        setText(text);
         this.isChecked = isChecked;
     }
 
