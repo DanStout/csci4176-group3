@@ -13,6 +13,8 @@ public class Prefs
     private static final String PREF_SHOW_TASKS = "showtasks";
     private static final String PREF_SHOW_MOOD = "showmood";
     private static final String PREF_SHOW_STEPS = "showsteps";
+    private static final String PREF_SHOW_CAFFEINE = "showcaffeine";
+    private static final String PREF_SHOW_WATER = "showwater";
 
     private final SharedPreferences mPrefs;
 
@@ -90,5 +92,25 @@ public class Prefs
     public void setShowMood(boolean doShow)
     {
         mPrefs.edit().putBoolean(PREF_SHOW_MOOD, doShow).apply();
+    }
+
+    public boolean doShowCaffeine()
+    {
+        return mPrefs.getBoolean(PREF_SHOW_CAFFEINE, true);
+    }
+
+    public void setShowCaffeine(boolean doShow)
+    {
+        mPrefs.edit().putBoolean(PREF_SHOW_CAFFEINE, doShow).apply();
+    }
+
+    public boolean doShowWater()
+    {
+        return mPrefs.getBoolean(PREF_SHOW_WATER, true);
+    }
+
+    public void setShowWater(boolean doShow)
+    {
+        mPrefs.edit().putBoolean(PREF_SHOW_WATER, doShow).apply();
     }
 }

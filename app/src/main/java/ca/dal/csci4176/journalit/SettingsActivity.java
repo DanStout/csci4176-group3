@@ -14,7 +14,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
 
     private Toolbar mToolbar;
     private ToggleButton location;
-    private CheckBox note, task, mood, step;
+    private CheckBox note, task, mood, step, caffeine, water;
     private Button button;
     private Prefs mPrefs;
 
@@ -31,6 +31,8 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         task = (CheckBox) findViewById(R.id.task);
         mood = (CheckBox) findViewById(R.id.mood);
         step = (CheckBox) findViewById(R.id.step);
+        caffeine = (CheckBox) findViewById(R.id.caffeine);
+        water = (CheckBox) findViewById(R.id.water);
         button = (Button) findViewById(R.id.button);
         button.setOnClickListener(this);
         mToolbar.setTitle("SettingsActivity");
@@ -50,6 +52,8 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         note.setChecked(mPrefs.doShowNotes());
         task.setChecked(mPrefs.doShowTasks());
         mood.setChecked(mPrefs.doShowMood());
+        caffeine.setChecked(mPrefs.doShowCaffeine());
+        water.setChecked(mPrefs.doShowWater());
         step.setChecked(mPrefs.doShowSteps());
         location.setChecked(mPrefs.isLocationEnabled());
     }
@@ -60,6 +64,8 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
             mPrefs.setShowNotes(note.isChecked());
             mPrefs.setShowTasks(task.isChecked());
             mPrefs.setShowMood(mood.isChecked());
+            mPrefs.setShowCaffeine(caffeine.isChecked());
+            mPrefs.setShowWater(water.isChecked());
             mPrefs.setShowsteps(step.isChecked());
             mPrefs.setLocationEnabled(location.isChecked());
             finish();

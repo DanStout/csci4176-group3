@@ -542,6 +542,24 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             mMoodSpinner.setVisibility(View.GONE);
         }
 
+        if (mPrefs.doShowCaffeine())
+        {
+            mCaffeine.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mCaffeine.setVisibility(View.GONE);
+        }
+
+        if (mPrefs.doShowWater())
+        {
+            mWater.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            mWater.setVisibility(View.GONE);
+        }
+
         if (mPrefs.doShowSteps())
         {
             mStepCont.setVisibility(View.VISIBLE);
