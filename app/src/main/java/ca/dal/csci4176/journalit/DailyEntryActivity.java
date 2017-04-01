@@ -380,7 +380,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             int loc = mEntry.getNotes().indexOf(item) + 1;
 
-            if (mPrefs.isLocationEnabled() && position > 0) {
+            if (mPrefs.isLocationEnabled()) {
                 mRealm.beginTransaction();
                 item.setText(newText);
                 BulletItem newItem = mRealm.createObject(BulletItem.class);
@@ -542,13 +542,18 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     public void onMapReady(GoogleMap googleMap)
     {
         LatLng loc;
-        for (int i = 0; i < mEntry.getNotes().size(); i++)
-        {
-            BulletItem hold = mEntry.getNotes().get(i);
-            if ((!Double.isNaN(hold.getEntryLat()) || !Double.isNaN(hold.getEntryLong())) && !hold.getText().equals("")) {
-                loc = new LatLng(hold.getEntryLat(), hold.getEntryLong());
-                googleMap.addMarker(new MarkerOptions().position(loc)
-                        .title(hold.getText()));
+        BulletItem hold = mEntry.getNotes().get(0);
+        loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
+        googleMap.addMarker(new MarkerOptions().position(loc)
+                .title(hold.getText()));
+        if (mEntry.getNotes().size() > 1) {
+            for (int i = 1; i < mEntry.getNotes().size(); i++) {
+                hold = mEntry.getNotes().get(i);
+                if ((!Double.isNaN(hold.getEntryLat()) || !Double.isNaN(hold.getEntryLong())) && !hold.getText().equals("")) {
+                    loc = new LatLng(hold.getEntryLat(), hold.getEntryLong());
+                    googleMap.addMarker(new MarkerOptions().position(loc)
+                            .title(hold.getText()));
+                }
             }
         }
 
@@ -571,15 +576,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         gpsConf.setBearingRequired(false);
         gpsConf.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
         Timber.d("Called.");
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Location location = locationManager.getLastKnownLocation(GPS_PROVIDER);
-            //The location may not move between creating an entry, and adding a note
-            //Want to ensure locations are as accurate as possible
-            if (location != null) {
-                newItem.setEntryLong(location.getLongitude());
-                newItem.setEntryLat(location.getLatitude());
-            }
-        }
 
         LocationListener locationListener = new LocationListener()
         {
@@ -613,6 +609,21 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                 Log.d("Provider Disabled", provider);
             }
         };
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Location location = locationManager.getLastKnownLocation(GPS_PROVIDER);
+            //The location may not move between creating an entry, and adding a note
+            //Want to ensure locations are as accurate as possible
+            if (location != null) {
+                newItem.setEntryLong(location.getLongitude());
+                newItem.setEntryLat(location.getLatitude());
+            } else {
+                locationManager.requestSingleUpdate(gpsConf, locationListener, null);
+                location = locationManager.getLastKnownLocation(GPS_PROVIDER);
+                newItem.setEntryLat(location.getLatitude());
+                newItem.setEntryLong(location.getLongitude());
+            }
+        }
 
         Dexter.withActivity(this)
                 .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
