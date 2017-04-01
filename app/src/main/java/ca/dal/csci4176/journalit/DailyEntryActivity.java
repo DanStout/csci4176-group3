@@ -380,7 +380,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             int loc = mEntry.getNotes().indexOf(item) + 1;
 
-            if (mPrefs.isLocationEnabled()) {
+            if (mPrefs.isLocationEnabled() && position > 0) {
                 mRealm.beginTransaction();
                 item.setText(newText);
                 BulletItem newItem = mRealm.createObject(BulletItem.class);

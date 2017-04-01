@@ -155,6 +155,8 @@ public class MainActivity extends AppCompatActivity
                 mRealm.beginTransaction();
                 ent.setLatitude(location.getLatitude());
                 ent.setLongitude(location.getLongitude());
+                ent.getNotes().get(0).setEntryLat(location.getLatitude());
+                ent.getNotes().get(0).setEntryLong(location.getLongitude());
                 mRealm.commitTransaction();
             }
 
