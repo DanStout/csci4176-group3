@@ -52,6 +52,7 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
 
         void bindToEntry(DailyEntry entry)
         {
+            picture.setImageBitmap(null);
             date.setText(entry.getDateFormatted());
 
             RealmList<BulletItem> notes = entry.getNotes();
@@ -79,10 +80,8 @@ public class RVAdapter extends RealmRecyclerViewAdapter<DailyEntry, RVAdapter.Ca
                     Bitmap thumb = ThumbnailUtils.extractThumbnail(full, w, w);
                     picture.setImageBitmap(thumb);
                     picture.setVisibility(View.VISIBLE);
-                    return;
                 }
             }
-            picture.setImageResource(R.mipmap.ic_launcher);
         }
 
         @Override

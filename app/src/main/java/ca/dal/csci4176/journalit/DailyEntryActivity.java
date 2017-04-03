@@ -1,26 +1,17 @@
 package ca.dal.csci4176.journalit;
 
-import android.Manifest;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -31,27 +22,24 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.jmedeisis.draglinearlayout.DragLinearLayout;
-import com.karumi.dexter.Dexter;
-import com.karumi.dexter.PermissionToken;
-import com.karumi.dexter.listener.PermissionDeniedResponse;
-import com.karumi.dexter.listener.PermissionGrantedResponse;
-import com.karumi.dexter.listener.PermissionRequest;
-import com.karumi.dexter.listener.single.PermissionListener;
 
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -61,6 +49,7 @@ import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
 import ca.dal.csci4176.journalit.models.Mood;
 import ca.dal.csci4176.journalit.models.MoodItem;
+import ca.dal.csci4176.journalit.service.LocationGetter;
 import ca.dal.csci4176.journalit.utils.BitmapUtils;
 import ca.dal.csci4176.journalit.utils.ViewUtils;
 import ca.dal.csci4176.journalit.views.BulletItemView;
@@ -68,9 +57,8 @@ import ca.dal.csci4176.journalit.views.CheckboxItemView;
 import io.realm.Realm;
 import timber.log.Timber;
 
-import static android.location.LocationManager.*;
-
-public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyCallback
+{
     private static final DateTimeFormatter mImgFileNameDateFormat = DateTimeFormatter.ofPattern("yyyyMMdd_hhmmssSSS");
     private static final String EXTRA_ENTRY_ID = "entry_id";
     private static final int REQ_TAKE_PHOTO = 1;
@@ -80,6 +68,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     private File mPhotoFile;
     private Prefs mPrefs;
     private Drawable mBackDraw;
+    private LocationGetter mLocGetter;
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -123,11 +112,15 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     SupportMapFragment mMap;
 
     @OnClick(R.id.entry_no_photo_container)
-    public void takePhoto() {
+    public void takePhoto()
+    {
         Intent in = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        try {
+        try
+        {
             mPhotoFile = createImageFile();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             Timber.w(e, "Failed to create temp image file");
             Toast.makeText(this, R.string.photo_failed, Toast.LENGTH_LONG).show();
             return;
@@ -140,27 +133,33 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         in.setClipData(clip);
         in.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
-        if (in.resolveActivity(getPackageManager()) != null) {
+        if (in.resolveActivity(getPackageManager()) != null)
+        {
             startActivityForResult(in, REQ_TAKE_PHOTO);
-        } else {
+        }
+        else
+        {
             Timber.d("Unable to find activity to take photo");
         }
     }
 
-    private File createImageFile() throws IOException {
+    private File createImageFile() throws IOException
+    {
         String imgName = "img_" + LocalDateTime.now().format(mImgFileNameDateFormat) + "_";
         File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         return File.createTempFile(imgName, ".jpg", dir);
     }
 
-    public static Intent getIntent(Context ctx, DailyEntry entry) {
+    public static Intent getIntent(Context ctx, DailyEntry entry)
+    {
         Intent in = new Intent(ctx, DailyEntryActivity.class);
         in.putExtra(EXTRA_ENTRY_ID, entry.getKey());
         return in;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_daily_entry);
         ButterKnife.bind(this);
@@ -168,6 +167,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
+        mLocGetter = new LocationGetter(this);
         mPrefs = new Prefs(this);
 
         mRealm = Realm.getDefaultInstance();
@@ -176,7 +176,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         mBackDraw = getWindow().getDecorView().getBackground().getConstantState().newDrawable();
 
         long id = getIntent().getLongExtra(EXTRA_ENTRY_ID, -1);
-        if (id == -1) {
+        if (id == -1)
+        {
             Timber.w("Extra %s not found!", EXTRA_ENTRY_ID);
             finish();
             return;
@@ -208,14 +209,17 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         mood_adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mood_spinner.setAdapter(mood_adapter);
 
-        if (mEntry.getMood() != null) {
+        if (mEntry.getMood() != null)
+        {
             int index = mood_adapter.getPosition(mEntry.getMood().getEnum());
             mood_spinner.setSelection(index);
         }
 
-        mood_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mood_spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
+        {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
+            {
                 Mood mood = (Mood) parent.getItemAtPosition(position);
 
                 mRealm.beginTransaction();
@@ -226,33 +230,43 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parent) {
+            public void onNothingSelected(AdapterView<?> parent)
+            {
             }
         });
 
         mEntry.getNotes().addChangeListener((col, changeSet) ->
         {
-            for (int pos : changeSet.getInsertions()) {
+            for (int pos : changeSet.getInsertions())
+            {
                 Timber.d("Bullet inserted at %d", pos);
                 BulletItem item = col.get(pos);
                 addBulletItem(item, pos, true);
             }
 
-            for (int pos : changeSet.getDeletions()) {
+            for (int pos : changeSet.getDeletions())
+            {
                 Timber.d("Bullet %d removed", pos);
                 mNoteCont.removeViewAt(pos);
                 int next = pos == 0 ? pos + 1 : pos - 1;
                 mNoteCont.getChildAt(next).requestFocus();
             }
 
-            for (int pos : changeSet.getChanges()) {
+            if (changeSet.getInsertions().length > 0 || changeSet.getDeletions().length > 0)
+            {
+                mMap.getMapAsync(this::updatePins);
+            }
+
+            for (int pos : changeSet.getChanges())
+            {
                 BulletItemView v = (BulletItemView) mNoteCont.getChildAt(pos);
                 v.updateFromItem();
                 Timber.d("Bullet item %d changed", pos);
             }
         });
 
-        for (int i = 0; i < mEntry.getNotes().size(); i++) {
+        for (int i = 0; i < mEntry.getNotes().size(); i++)
+        {
             BulletItem item = mEntry.getNotes().get(i);
             addBulletItem(item, i, false);
         }
@@ -265,27 +279,31 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
         mEntry.getTasks().addChangeListener((col, changeSet) ->
         {
-            for (int pos : changeSet.getInsertions()) {
+            for (int pos : changeSet.getInsertions())
+            {
                 Timber.d("Checkbox inserted at %d", pos);
                 CheckboxItem item = col.get(pos);
                 addCheckboxItem(item, pos, true);
             }
 
-            for (int pos : changeSet.getDeletions()) {
+            for (int pos : changeSet.getDeletions())
+            {
                 Timber.d("Checkbox %d deleted", pos);
                 mTaskCont.removeViewAt(pos);
                 int next = pos == 0 ? pos + 1 : pos - 1;
                 mTaskCont.getChildAt(next).requestFocus();
             }
 
-            for (int pos : changeSet.getChanges()) {
+            for (int pos : changeSet.getChanges())
+            {
                 Timber.d("Checkbox item %d changed", pos);
                 CheckboxItemView v = (CheckboxItemView) mTaskCont.getChildAt(pos);
                 v.updateFromItem();
             }
         });
 
-        for (int i = 0; i < mEntry.getTasks().size(); i++) {
+        for (int i = 0; i < mEntry.getTasks().size(); i++)
+        {
             CheckboxItem item = mEntry.getTasks().get(i);
             addCheckboxItem(item, i, false);
         }
@@ -321,7 +339,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         bul.bindToItem(item);
         mTaskCont.addDragView(bul, bul.getMoveHandle(), pos);
 
-        if (doFocus) {
+        if (doFocus)
+        {
             bul.requestFocus();
         }
 
@@ -346,7 +365,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         bul.setDeleteListener(() ->
         {
             int idx = mEntry.getTasks().indexOf(item);
-            if (idx > 0) {
+            if (idx > 0)
+            {
                 CheckboxItem prev = mEntry.getTasks().get(idx - 1);
                 String ptxt = prev.getText();
                 String itxt = item.getText();
@@ -361,12 +381,14 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         });
     }
 
-    private void addBulletItem(BulletItem item, int position, boolean doFocus) {
+    private void addBulletItem(BulletItem item, int position, boolean doFocus)
+    {
         BulletItemView bul = new BulletItemView(mRealm, this);
         bul.setBackground(mBackDraw);
         bul.bindToItem(item);
         mNoteCont.addDragView(bul, bul.getMoveHandle(), position);
-        if (doFocus) {
+        if (doFocus)
+        {
             bul.requestFocus();
         }
 
@@ -380,30 +402,22 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             int loc = mEntry.getNotes().indexOf(item) + 1;
 
-            if (mPrefs.isLocationEnabled()) {
-                mRealm.beginTransaction();
-                item.setText(newText);
-                BulletItem newItem = mRealm.createObject(BulletItem.class);
-                newItem = mRealm.createObject(BulletItem.class);
-                newItem.setText(selText);
-                pullLocationOnce(newItem, loc);
-                mRealm.commitTransaction();
-            } else {
-                mRealm.beginTransaction();
-                item.setText(newText);
-                BulletItem newItem = mRealm.createObject(BulletItem.class);
-                newItem = mRealm.createObject(BulletItem.class);
-                newItem.setText(selText);
-                mEntry.getNotes().add(loc, newItem);
-                mRealm.commitTransaction();
-            }
+            mRealm.beginTransaction();
+            item.setText(newText);
+            BulletItem newItem = mRealm.createObject(BulletItem.class);
+            newItem = mRealm.createObject(BulletItem.class);
+            newItem.setText(selText);
+            mEntry.getNotes().add(loc, newItem);
+            mRealm.commitTransaction();
 
+            saveLocationForNote(newItem);
         });
 
         bul.setDeleteListener(() ->
         {
             int idx = mEntry.getNotes().indexOf(item);
-            if (idx > 0) {
+            if (idx > 0)
+            {
                 BulletItem prev = mEntry.getNotes().get(idx - 1);
                 String ptxt = prev.getText();
                 String itxt = item.getText();
@@ -418,9 +432,29 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         });
     }
 
+    private void saveLocationForNote(BulletItem newItem)
+    {
+        mLocGetter.findLocation(location ->
+        {
+            if (mRealm.isInTransaction())
+            {
+                Timber.d("Cannot save location for note!");
+                return;
+            }
+
+            mRealm.executeTransaction(r ->
+            {
+                newItem.setEntryLat(location.getLatitude());
+                newItem.setEntryLong(location.getLongitude());
+            });
+        });
+    }
+
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK)
+        {
             Timber.d("File path: %s", mPhotoFile.getPath());
             mRealm.executeTransaction(r -> mEntry.setPhotoPath(mPhotoFile.getPath()));
             setPhotoFromEntry();
@@ -466,7 +500,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onDestroy()
+    {
         super.onDestroy();
 
         // TODO: If we add listeners outside of DailyEntryActivity this could be problematic
@@ -478,193 +513,112 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
 
     @Override
-    public void onResume() {
+    public void onResume()
+    {
         super.onResume();
 
-        if (mPrefs.doShowNotes()) {
+        if (mPrefs.doShowNotes())
+        {
             mNoteCont.setVisibility(View.VISIBLE);
             mNote.setVisibility(View.VISIBLE);
-        } else {
+        }
+        else
+        {
             mNoteCont.setVisibility(View.GONE);
             mNote.setVisibility(View.GONE);
         }
 
-        if (mPrefs.doShowTasks()) {
+        if (mPrefs.doShowTasks())
+        {
             mTaskCont.setVisibility(View.VISIBLE);
             mTask.setVisibility(View.VISIBLE);
-        } else {
+        }
+        else
+        {
             mTaskCont.setVisibility(View.GONE);
             mTask.setVisibility(View.GONE);
         }
 
-        if (mPrefs.doShowMood()) {
+        if (mPrefs.doShowMood())
+        {
             mMoodTitle.setVisibility(View.VISIBLE);
             mMoodSpinner.setVisibility(View.VISIBLE);
-        } else {
+        }
+        else
+        {
             mMoodTitle.setVisibility(View.GONE);
             mMoodSpinner.setVisibility(View.GONE);
         }
 
-        if (mPrefs.doShowCaffeine())
-        {
-            mCaffeine.setVisibility(View.VISIBLE);
-        }
-        else
-        {
-            mCaffeine.setVisibility(View.GONE);
-        }
-
-        if (mPrefs.doShowWater())
-        {
-            mWater.setVisibility(View.VISIBLE);
-        }
-        else
-        {
-            mWater.setVisibility(View.GONE);
-        }
-
-        if (mPrefs.doShowSteps())
-        {
-            mStepCont.setVisibility(View.VISIBLE);
-        } else {
-            mStepCont.setVisibility(View.GONE);
-        }
+        mCaffeine.setVisibility(mPrefs.doShowCaffeine() ? View.VISIBLE : View.GONE);
+        mWater.setVisibility(mPrefs.doShowWater() ? View.VISIBLE : View.GONE);
+        mStepCont.setVisibility(mPrefs.doShowSteps() ? View.VISIBLE : View.GONE);
 
         Timber.d("Location enabled: %s, Has Location: %s", mPrefs.isLocationEnabled(), mEntry.hasLocation());
-        if (mPrefs.isLocationEnabled() && mEntry.hasLocation()) {
-            mMap.getView().setVisibility(View.VISIBLE);
-        } else {
-            mMap.getView().setVisibility(View.GONE);
-        }
+        int vis = mPrefs.isLocationEnabled() && mEntry.hasLocation() ? View.VISIBLE : View.GONE;
+        mMap.getView().setVisibility(vis);
     }
+
+    private List<Marker> pins = new ArrayList<>();
 
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
-        LatLng loc;
-        BulletItem hold = mEntry.getNotes().get(0);
-        loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
-        googleMap.addMarker(new MarkerOptions().position(loc)
-                .title(hold.getText()));
-        if (mEntry.getNotes().size() > 1) {
-            for (int i = 1; i < mEntry.getNotes().size(); i++) {
-                hold = mEntry.getNotes().get(i);
-                if ((!Double.isNaN(hold.getEntryLat()) || !Double.isNaN(hold.getEntryLong())) && !hold.getText().equals("")) {
-                    loc = new LatLng(hold.getEntryLat(), hold.getEntryLong());
-                    googleMap.addMarker(new MarkerOptions().position(loc)
-                            .title(hold.getText()));
-                }
-            }
-        }
-
-        loc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
-        CameraUpdate cUp = CameraUpdateFactory.newLatLngZoom(loc, 16);
-
-        googleMap.addMarker(new MarkerOptions().position(loc)
-                .title(mEntry.getDateFormatted()));
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(loc));
-        googleMap.animateCamera(cUp);
+        googleMap.setOnMapLoadedCallback(() -> updatePins(googleMap));
     }
 
-    private void pullLocationOnce(BulletItem newItem, int loc) {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria gpsConf = new Criteria();
-        gpsConf.setAccuracy(Criteria.ACCURACY_FINE);
-        gpsConf.setPowerRequirement(Criteria.POWER_MEDIUM);
-        gpsConf.setAltitudeRequired(false);
-        gpsConf.setSpeedRequired(false);
-        gpsConf.setBearingRequired(false);
-        gpsConf.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
-        Timber.d("Called.");
-
-        LocationListener locationListener = new LocationListener()
+    private void updatePins(GoogleMap map)
+    {
+        for (Marker mark : pins)
         {
-            @Override
-            public void onLocationChanged(Location location)
+            mark.remove();
+        }
+        pins.clear();
+
+        for (BulletItem item : mEntry.getNotes())
+        {
+            if (item.getEntryLat() == 0 || item.getEntryLong() == 0 || item.getText() == null ||
+                    item.getText().isEmpty())
             {
-                //If the location has changed since we created the entry, we'll update the note's location
-                Timber.d("Location Changed: %s.", location);
-                mRealm.beginTransaction();
-                newItem.setEntryLat(location.getLatitude());
-                newItem.setEntryLong(location.getLongitude());
-                mEntry.getNotes().add(loc, newItem);
-                mRealm.commitTransaction();
+                continue;
             }
 
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras)
-            {
-                Log.d("Status Changed.", String.valueOf(status));
-            }
-
-            @Override
-            public void onProviderEnabled(String provider)
-            {
-                Log.d("Provider Enabled", provider);
-            }
-
-            @Override
-            public void onProviderDisabled(String provider)
-            {
-                Log.d("Provider Disabled", provider);
-            }
-        };
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Location location = locationManager.getLastKnownLocation(GPS_PROVIDER);
-            //The location may not move between creating an entry, and adding a note
-            //Want to ensure locations are as accurate as possible
-            if (location != null) {
-                newItem.setEntryLong(location.getLongitude());
-                newItem.setEntryLat(location.getLatitude());
-            } else {
-                locationManager.requestSingleUpdate(gpsConf, locationListener, null);
-                location = locationManager.getLastKnownLocation(GPS_PROVIDER);
-                newItem.setEntryLat(location.getLatitude());
-                newItem.setEntryLong(location.getLongitude());
-            }
+            MarkerOptions opts = new MarkerOptions()
+                    .position(new LatLng(item.getEntryLat(), item.getEntryLong()))
+                    .title(item.getText());
+            Marker mark = map.addMarker(opts);
+            pins.add(mark);
         }
 
-        Dexter.withActivity(this)
-                .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                .withListener(new PermissionListener()
-                {
-                    @Override
-                    public void onPermissionGranted(PermissionGrantedResponse response)
-                    {
-                        Timber.d("Permission granted");
-                        //noinspection MissingPermission
-                        locationManager.requestSingleUpdate(gpsConf, locationListener, null);
-                    }
 
-                    @Override
-                    public void onPermissionDenied(PermissionDeniedResponse response)
-                    {
-                        Timber.d("Permission denied");
-                    }
+        LatLng entryLoc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
+        if (mEntry.hasLocation())
+        {
+            MarkerOptions opt = new MarkerOptions()
+                    .position(entryLoc)
+                    .title(mEntry.getDateFormatted());
+            Marker mark = map.addMarker(opt);
+            pins.add(mark);
+        }
 
-                    @Override
-                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token)
-                    {
-                        Timber.d("Showing rationale..");
-                        new MaterialDialog.Builder(DailyEntryActivity.this)
-                                .content(R.string.rationale_location)
-                                .positiveText(R.string.OK)
-                                .negativeText(R.string.no_thanks)
-                                .onPositive((dialog, which) ->
-                                {
-                                    Timber.d("Continuing with permission request");
-                                    token.continuePermissionRequest();
-                                })
-                                .onNegative((dialog, which) ->
-                                {
-                                    Timber.d("Cancelling permission request");
-                                    token.cancelPermissionRequest();
-                                })
-                                .show();
-                    }
-                })
-                .check();
+        CameraUpdate update;
+
+        if (pins.size() > 1)
+        {
+            LatLngBounds.Builder bldr = new LatLngBounds.Builder();
+            for (Marker mark : pins)
+            {
+                bldr.include(mark.getPosition());
+            }
+            LatLngBounds bounds = bldr.build();
+            update = CameraUpdateFactory.newLatLngBounds(bounds, 30);
+        }
+        else
+        {
+            update = CameraUpdateFactory.newLatLngZoom(entryLoc, 16);
+        }
+
+        map.animateCamera(update);
     }
 
 

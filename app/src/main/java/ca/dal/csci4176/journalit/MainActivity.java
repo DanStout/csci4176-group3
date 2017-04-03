@@ -1,13 +1,7 @@
 package ca.dal.csci4176.journalit;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.location.Criteria;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -16,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -26,14 +19,9 @@ import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.karumi.dexter.Dexter;
-import com.karumi.dexter.PermissionToken;
-import com.karumi.dexter.listener.PermissionDeniedResponse;
-import com.karumi.dexter.listener.PermissionGrantedResponse;
-import com.karumi.dexter.listener.PermissionRequest;
-import com.karumi.dexter.listener.single.PermissionListener;
 import com.nononsenseapps.filepicker.FilePickerActivity;
 
 import org.threeten.bp.LocalDate;
@@ -41,12 +29,14 @@ import org.threeten.bp.LocalDate;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Random;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
+import ca.dal.csci4176.journalit.service.LocationGetter;
 import io.realm.Realm;
 import io.realm.RealmResults;
 import io.realm.Sort;
@@ -65,10 +55,10 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.main_entry_list)
     RecyclerView mRecycler;
 
+    private Random rand = new Random();
+    private LocationGetter mLocGetter;
     private DailyEntry mToday;
-
     private Realm mRealm;
-
     private Prefs mPrefs;
 
     @Override
@@ -78,6 +68,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         mPrefs = new Prefs(this);
+        mLocGetter = new LocationGetter(this);
         setSupportActionBar(mToolbar);
 
         checkGoogleSignin();
@@ -137,88 +128,20 @@ public class MainActivity extends AppCompatActivity
 
     private void saveCreationLocationForEntry(DailyEntry ent)
     {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        Criteria gpsConf = new Criteria();
-        gpsConf.setAccuracy(Criteria.ACCURACY_FINE);
-        gpsConf.setPowerRequirement(Criteria.POWER_MEDIUM);
-        gpsConf.setAltitudeRequired(false);
-        gpsConf.setSpeedRequired(false);
-        gpsConf.setBearingRequired(false);
-        gpsConf.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
-
-        LocationListener locationListener = new LocationListener()
+        mLocGetter.findLocation(location ->
         {
-            @Override
-            public void onLocationChanged(Location location)
+            if (mRealm.isInTransaction())
             {
-                Log.d("Location Changed.", location.toString());
-                mRealm.beginTransaction();
-                ent.setLatitude(location.getLatitude());
+                Timber.d("Cannot save location: already in transaction");
+                return;
+            }
+
+            mRealm.executeTransaction(r ->
+            {
                 ent.setLongitude(location.getLongitude());
-                //ent.getNotes().get(0).setEntryLat(location.getLatitude());
-                //ent.getNotes().get(0).setEntryLong(location.getLongitude());
-                mRealm.commitTransaction();
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras)
-            {
-                Log.d("Status Changed.", String.valueOf(status));
-            }
-
-            @Override
-            public void onProviderEnabled(String provider)
-            {
-                Log.d("Provider Enabled", provider);
-            }
-
-            @Override
-            public void onProviderDisabled(String provider)
-            {
-                Log.d("Provider Disabled", provider);
-            }
-        };
-
-        Dexter.withActivity(this)
-                .withPermission(Manifest.permission.ACCESS_FINE_LOCATION)
-                .withListener(new PermissionListener()
-                {
-                    @Override
-                    public void onPermissionGranted(PermissionGrantedResponse response)
-                    {
-                        Timber.d("Permission granted");
-                        //noinspection MissingPermission
-                        locationManager.requestSingleUpdate(gpsConf, locationListener, null);
-                    }
-
-                    @Override
-                    public void onPermissionDenied(PermissionDeniedResponse response)
-                    {
-                        Timber.d("Permission denied");
-                    }
-
-                    @Override
-                    public void onPermissionRationaleShouldBeShown(PermissionRequest permission, PermissionToken token)
-                    {
-                        Timber.d("Showing rationale..");
-                        new MaterialDialog.Builder(MainActivity.this)
-                                .content(R.string.rationale_location)
-                                .positiveText(R.string.OK)
-                                .negativeText(R.string.no_thanks)
-                                .onPositive((dialog, which) ->
-                                {
-                                    Timber.d("Continuing with permission request");
-                                    token.continuePermissionRequest();
-                                })
-                                .onNegative((dialog, which) ->
-                                {
-                                    Timber.d("Cancelling permission request");
-                                    token.cancelPermissionRequest();
-                                })
-                                .show();
-                    }
-                })
-                .check();
+                ent.setLatitude(location.getLatitude());
+            });
+        });
     }
 
     /**
@@ -306,7 +229,7 @@ public class MainActivity extends AppCompatActivity
     private void exportDataToFile(Uri contentUri)
     {
 
-        try(
+        try (
                 OutputStream out = getContentResolver().openOutputStream(contentUri);
                 PrintWriter writer = new PrintWriter(out))
         {
@@ -349,8 +272,16 @@ public class MainActivity extends AppCompatActivity
 
             ent = mRealm.copyToRealmOrUpdate(ent);
 
+
             BulletItem note1 = new BulletItem("I drank 1500 litres of coffee today");
+            LatLng note1loc = getRandomDemoLocation();
+            note1.setEntryLat(note1loc.latitude);
+            note1.setEntryLong(note1loc.longitude);
+
             BulletItem note2 = new BulletItem("I saw my nemesis on the bus");
+            LatLng note2loc = getRandomDemoLocation();
+            note2.setEntryLat(note2loc.latitude);
+            note2.setEntryLong(note2loc.longitude);
 
             CheckboxItem task1 = new CheckboxItem("Take out the garbage", Math.random() < 0.5);
             CheckboxItem task2 = new CheckboxItem("Learn to speak Korean", Math.random() < 0.5);
@@ -360,8 +291,20 @@ public class MainActivity extends AppCompatActivity
 
             ent.getTasks().add(task1);
             ent.getTasks().add(task2);
+
+            LatLng loc = getRandomDemoLocation();
+            ent.setLatitude(loc.latitude);
+            ent.setLongitude(loc.longitude);
         }
         mRealm.commitTransaction();
+    }
+
+    private LatLng getRandomDemoLocation()
+    {
+        double std = 0.001;
+        double lat = rand.nextGaussian() * std + 44.637401;
+        double lng = rand.nextGaussian() * std - 63.587379;
+        return new LatLng(lat, lng);
     }
 
     @Override

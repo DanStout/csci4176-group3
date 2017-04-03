@@ -12,6 +12,31 @@ public class ViewUtils
         void onMeasured(int width, int height);
     }
 
+    public interface OnLayoutCallback
+    {
+        void onLayout();
+    }
+
+    public static void executeOnLayout(View view, OnLayoutCallback callback)
+    {
+        if (view.isLaidOut())
+        {
+            callback.onLayout();
+        }
+        else
+        {
+            view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
+            {
+                @Override
+                public void onGlobalLayout()
+                {
+                    callback.onLayout();
+                    view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                }
+            });
+        }
+    }
+
     /**
      * Execute a callback when the dimensions of a view are known
      */
@@ -26,16 +51,6 @@ public class ViewUtils
         }
 
         Timber.d("View has a zero dimension: adding OnPreDrawListener");
-
-        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener()
-        {
-            @Override
-            public void onGlobalLayout()
-            {
-                Timber.d("OnGlobalLayout");
-                func.onMeasured(view.getMeasuredWidth(), view.getMeasuredHeight());
-                view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-            }
-        });
+        executeOnLayout(view, () -> func.onMeasured(view.getMeasuredWidth(), view.getMeasuredHeight()));
     }
 }
