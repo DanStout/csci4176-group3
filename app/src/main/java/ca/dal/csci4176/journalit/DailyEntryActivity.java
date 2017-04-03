@@ -71,6 +71,16 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     private Prefs mPrefs;
     private Drawable mBackDraw;
     private LocationGetter mLocGetter;
+    private SupportMapFragment mMapFrag;
+
+    /**
+     * Notes currently displayed on map, plus one for the entry
+     */
+    private Map<BulletItem, Marker> mPins = new HashMap<>();
+
+    /**
+     * Fake empty bullet item used to show the daily entry's location
+     */
     private BulletItem mEntryItem = new BulletItem();
 
     @BindView(R.id.daily_scrollview)
@@ -118,8 +128,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     @BindView(R.id.water)
     View mWater;
 
-    SupportMapFragment mMap;
-
     @OnClick(R.id.entry_no_photo_container)
     public void takePhoto()
     {
@@ -150,13 +158,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         {
             Timber.d("Unable to find activity to take photo");
         }
-    }
-
-    private File createImageFile() throws IOException
-    {
-        String imgName = "img_" + LocalDateTime.now().format(mImgFileNameDateFormat) + "_";
-        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        return File.createTempFile(imgName, ".jpg", dir);
     }
 
     public static Intent getIntent(Context ctx, DailyEntry entry)
@@ -199,11 +200,11 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
         Timber.d("Found entry: %s", mEntry);
         setTitle(mEntry.getDateFormatted());
-        setPhotoFromEntry();
+        displayPhotoFromEntry();
         mTxtSteps.setText(String.valueOf(mEntry.getSteps()));
 
-        mMap = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mMap.getMapAsync(this);
+        mMapFrag = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mMapFrag.getMapAsync(this);
 
         setupOtherSections();
         setupNotesAndTasks();
@@ -299,7 +300,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             {
                 // We have to clear pins immediately before continuing to changeset, because removed bulletitems will be invalid
                 clearPins();
-                mMap.getMapAsync(this::updatePins);
+                mMapFrag.getMapAsync(this::updatePins);
             }
 
             for (int pos : changeSet.getChanges())
@@ -309,7 +310,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                 v.updateFromItem();
 
                 BulletItem item = col.get(pos);
-                Marker mark = pins.get(item);
+                Marker mark = mPins.get(item);
                 if (mark != null)
                 {
                     mark.setTitle(item.getText());
@@ -365,6 +366,13 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             Timber.d("Checkbox moved: %d -> %d", firstPosition, secondPosition);
             mRealm.executeTransaction(r -> mEntry.getTasks().move(firstPosition, secondPosition));
         });
+    }
+
+    private File createImageFile() throws IOException
+    {
+        String imgName = "img_" + LocalDateTime.now().format(mImgFileNameDateFormat) + "_";
+        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return File.createTempFile(imgName, ".jpg", dir);
     }
 
     @Override
@@ -509,7 +517,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         {
             Timber.d("File path: %s", mPhotoFile.getPath());
             mRealm.executeTransaction(r -> mEntry.setPhotoPath(mPhotoFile.getPath()));
-            setPhotoFromEntry();
+            displayPhotoFromEntry();
         }
     }
 
@@ -517,7 +525,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
      * Displays photo at given path
      * Do not call within a realm transaction
      */
-    private void setPhotoFromEntry()
+    private void displayPhotoFromEntry()
     {
         String photoPath = mEntry.getPhotoPath();
         if (photoPath == null)
@@ -608,10 +616,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
         Timber.d("Location enabled: %s, Has Location: %s", mPrefs.isLocationEnabled(), mEntry.hasLocation());
         int vis = mPrefs.isLocationEnabled() && mEntry.hasLocation() ? View.VISIBLE : View.GONE;
-        mMap.getView().setVisibility(vis);
+        mMapFrag.getView().setVisibility(vis);
     }
-
-    private Map<BulletItem, Marker> pins = new HashMap<>();
 
     @Override
     public void onMapReady(GoogleMap googleMap)
@@ -621,11 +627,11 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
     private void clearPins()
     {
-        for (Marker mark : pins.values())
+        for (Marker mark : mPins.values())
         {
             mark.remove();
         }
-        pins.clear();
+        mPins.clear();
     }
 
     private void updatePins(GoogleMap map)
@@ -641,7 +647,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                     .position(new LatLng(item.getEntryLat(), item.getEntryLong()))
                     .title(item.getText());
             Marker mark = map.addMarker(opts);
-            pins.put(item, mark);
+            mPins.put(item, mark);
         }
 
         LatLng entryLoc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
@@ -651,15 +657,15 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                     .position(entryLoc)
                     .title(mEntry.getDateFormatted());
             Marker mark = map.addMarker(opt);
-            pins.put(mEntryItem, mark);
+            mPins.put(mEntryItem, mark);
         }
 
         CameraUpdate update;
 
-        if (pins.size() > 1)
+        if (mPins.size() > 1)
         {
             LatLngBounds.Builder bldr = new LatLngBounds.Builder();
-            for (Marker mark : pins.values())
+            for (Marker mark : mPins.values())
             {
                 bldr.include(mark.getPosition());
             }

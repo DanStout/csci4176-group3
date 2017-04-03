@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -36,6 +37,7 @@ import butterknife.ButterKnife;
 import ca.dal.csci4176.journalit.models.BulletItem;
 import ca.dal.csci4176.journalit.models.CheckboxItem;
 import ca.dal.csci4176.journalit.models.DailyEntry;
+import ca.dal.csci4176.journalit.picker.CustomPickerActivity;
 import ca.dal.csci4176.journalit.service.LocationGetter;
 import io.realm.Realm;
 import io.realm.RealmResults;
@@ -221,14 +223,15 @@ public class MainActivity extends AppCompatActivity
 
     private void chooseExportDataFile()
     {
-        Intent i = new Intent(this, FilePickerActivity.class);
+        Intent i = new Intent(this, CustomPickerActivity.class);
+        i.putExtra(FilePickerActivity.EXTRA_ALLOW_CREATE_DIR, true);
         i.putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_NEW_FILE);
+        i.putExtra(FilePickerActivity.EXTRA_START_PATH, Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
         startActivityForResult(i, REQ_EXPORT_NEW_FILE);
     }
 
     private void exportDataToFile(Uri contentUri)
     {
-
         try (
                 OutputStream out = getContentResolver().openOutputStream(contentUri);
                 PrintWriter writer = new PrintWriter(out))
@@ -237,7 +240,8 @@ public class MainActivity extends AppCompatActivity
             Gson g = new GsonBuilder().setPrettyPrinting().create();
             String text = g.toJson(mRealm.copyFromRealm(entries));
             writer.write(text);
-            Toast.makeText(this, R.string.export_success, Toast.LENGTH_LONG).show();
+            String filename = contentUri.getLastPathSegment();
+            Toast.makeText(this, getString(R.string.export_success, filename), Toast.LENGTH_LONG).show();
         }
         catch (IOException e)
         {

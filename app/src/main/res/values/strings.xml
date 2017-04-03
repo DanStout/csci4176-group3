@@ -21,5 +21,6 @@
     <string name="plus">+</string>
     <string name="zero">0</string>
     <string name="export_failed">Please retry your data export</string>
-    <string name="export_success">Export Successful!</string>
+    <string name="export_success">Exported data to %1s successfully!</string>
+    <string name="error_empty_filename">File name cannot be empty</string>
 </resources>
