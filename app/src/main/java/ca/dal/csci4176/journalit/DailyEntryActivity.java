@@ -12,12 +12,14 @@ import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,8 +40,8 @@ import org.threeten.bp.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -69,6 +71,13 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     private Prefs mPrefs;
     private Drawable mBackDraw;
     private LocationGetter mLocGetter;
+    private BulletItem mEntryItem = new BulletItem();
+
+    @BindView(R.id.daily_scrollview)
+    ScrollView mScrollView;
+
+    @BindView(R.id.map_hack)
+    ImageView mMapHackLayout;
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -196,6 +205,37 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         mMap = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mMap.getMapAsync(this);
 
+        setupOtherSections();
+        setupNotesAndTasks();
+        enableMapHack();
+    }
+
+    /**
+     * http://stackoverflow.com/a/17317176/2513761
+     */
+    private void enableMapHack()
+    {
+        mMapHackLayout.setOnTouchListener((v, event) ->
+        {
+            switch (event.getAction())
+            {
+                case MotionEvent.ACTION_DOWN:
+                    mScrollView.requestDisallowInterceptTouchEvent(true);
+                    return false;
+                case MotionEvent.ACTION_UP:
+                    mScrollView.requestDisallowInterceptTouchEvent(false);
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    mScrollView.requestDisallowInterceptTouchEvent(true);
+                    return false;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    private void setupOtherSections()
+    {
         ((TextView) mCaffeine.findViewById(R.id.title)).setText("Caffeine Servings: ");
         ((EditText) mCaffeine.findViewById(R.id.num_val)).setText(String.valueOf(mEntry.getCaffeine()));
 
@@ -234,7 +274,10 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             {
             }
         });
+    }
 
+    private void setupNotesAndTasks()
+    {
         mEntry.getNotes().addChangeListener((col, changeSet) ->
         {
             for (int pos : changeSet.getInsertions())
@@ -254,14 +297,23 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
             if (changeSet.getInsertions().length > 0 || changeSet.getDeletions().length > 0)
             {
+                // We have to clear pins immediately before continuing to changeset, because removed bulletitems will be invalid
+                clearPins();
                 mMap.getMapAsync(this::updatePins);
             }
 
             for (int pos : changeSet.getChanges())
             {
+                Timber.d("Bullet item %d changed", pos);
                 BulletItemView v = (BulletItemView) mNoteCont.getChildAt(pos);
                 v.updateFromItem();
-                Timber.d("Bullet item %d changed", pos);
+
+                BulletItem item = col.get(pos);
+                Marker mark = pins.get(item);
+                if (mark != null)
+                {
+                    mark.setTitle(item.getText());
+                }
             }
         });
 
@@ -559,7 +611,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         mMap.getView().setVisibility(vis);
     }
 
-    private List<Marker> pins = new ArrayList<>();
+    private Map<BulletItem, Marker> pins = new HashMap<>();
 
     @Override
     public void onMapReady(GoogleMap googleMap)
@@ -567,18 +619,20 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         googleMap.setOnMapLoadedCallback(() -> updatePins(googleMap));
     }
 
-    private void updatePins(GoogleMap map)
+    private void clearPins()
     {
-        for (Marker mark : pins)
+        for (Marker mark : pins.values())
         {
             mark.remove();
         }
         pins.clear();
+    }
 
+    private void updatePins(GoogleMap map)
+    {
         for (BulletItem item : mEntry.getNotes())
         {
-            if (item.getEntryLat() == 0 || item.getEntryLong() == 0 || item.getText() == null ||
-                    item.getText().isEmpty())
+            if (item.getEntryLat() == 0 || item.getEntryLong() == 0)
             {
                 continue;
             }
@@ -587,9 +641,8 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                     .position(new LatLng(item.getEntryLat(), item.getEntryLong()))
                     .title(item.getText());
             Marker mark = map.addMarker(opts);
-            pins.add(mark);
+            pins.put(item, mark);
         }
-
 
         LatLng entryLoc = new LatLng(mEntry.getLatitude(), mEntry.getLongitude());
         if (mEntry.hasLocation())
@@ -598,7 +651,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                     .position(entryLoc)
                     .title(mEntry.getDateFormatted());
             Marker mark = map.addMarker(opt);
-            pins.add(mark);
+            pins.put(mEntryItem, mark);
         }
 
         CameraUpdate update;
@@ -606,12 +659,12 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
         if (pins.size() > 1)
         {
             LatLngBounds.Builder bldr = new LatLngBounds.Builder();
-            for (Marker mark : pins)
+            for (Marker mark : pins.values())
             {
                 bldr.include(mark.getPosition());
             }
             LatLngBounds bounds = bldr.build();
-            update = CameraUpdateFactory.newLatLngBounds(bounds, 30);
+            update = CameraUpdateFactory.newLatLngBounds(bounds, 100);
         }
         else
         {

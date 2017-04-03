@@ -273,7 +273,7 @@ public class MainActivity extends AppCompatActivity
             ent = mRealm.copyToRealmOrUpdate(ent);
 
 
-            BulletItem note1 = new BulletItem("I drank 1500 litres of coffee today");
+            BulletItem note1 = new BulletItem("I smelled burnt coffee");
             LatLng note1loc = getRandomDemoLocation();
             note1.setEntryLat(note1loc.latitude);
             note1.setEntryLong(note1loc.longitude);
