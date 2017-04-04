@@ -89,6 +89,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="25dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:orientation="horizontal"
                 >
 
@@ -103,12 +105,17 @@
 
                 <TextView
                     android:id="@+id/entry_steps"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textAlignment="textEnd"
                     android:textSize="18sp"
-                    tools:text="18583"
-                    />
+                    tools:text="18583" />
             </LinearLayout>
+
+            <View
+                android:layout_width="fill_parent"
+                android:layout_height="2dp"
+                android:background="#c5c5c5"/>
 
             <!-- Photo -->
             <FrameLayout
