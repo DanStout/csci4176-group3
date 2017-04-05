@@ -36,6 +36,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.jmedeisis.draglinearlayout.DragLinearLayout;
 
 import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.LocalTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
 import java.io.File;
@@ -53,6 +54,7 @@ import ca.dal.csci4176.journalit.models.Mood;
 import ca.dal.csci4176.journalit.models.MoodItem;
 import ca.dal.csci4176.journalit.service.LocationGetter;
 import ca.dal.csci4176.journalit.utils.BitmapUtils;
+import ca.dal.csci4176.journalit.utils.DateUtils;
 import ca.dal.csci4176.journalit.utils.ViewUtils;
 import ca.dal.csci4176.journalit.views.BulletItemView;
 import ca.dal.csci4176.journalit.views.CheckboxItemView;
@@ -313,7 +315,13 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                 Marker mark = mPins.get(item);
                 if (mark != null)
                 {
-                    mark.setTitle(item.getText());
+                    mark.setTitle(item.getMarkerText());
+
+                    // This will force it to update the displayed text
+                    if (mark.isInfoWindowShown())
+                    {
+                        mark.showInfoWindow();
+                    }
                 }
             }
         });
@@ -643,9 +651,11 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
                 continue;
             }
 
+
+
             MarkerOptions opts = new MarkerOptions()
                     .position(new LatLng(item.getEntryLat(), item.getEntryLong()))
-                    .title(item.getText());
+                    .title(item.getMarkerText());
             Marker mark = map.addMarker(opts);
             mPins.put(item, mark);
         }

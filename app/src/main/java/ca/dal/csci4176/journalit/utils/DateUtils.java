@@ -2,6 +2,7 @@ package ca.dal.csci4176.journalit.utils;
 
 import org.threeten.bp.Instant;
 import org.threeten.bp.LocalDate;
+import org.threeten.bp.LocalTime;
 import org.threeten.bp.ZoneId;
 
 import java.util.Date;
@@ -18,5 +19,9 @@ public class DateUtils
         return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
+    public static LocalTime toLocalTime(long epochMillis)
+    {
+        return Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault()).toLocalTime();
+    }
 
 }
