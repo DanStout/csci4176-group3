@@ -35,7 +35,7 @@ public class SettingsActivity extends AppCompatActivity implements View.OnClickL
         water = (CheckBox) findViewById(R.id.water);
         button = (Button) findViewById(R.id.button);
         button.setOnClickListener(this);
-        mToolbar.setTitle("SettingsActivity");
+        mToolbar.setTitle("Settings");
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);

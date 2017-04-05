@@ -630,6 +630,7 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     @Override
     public void onMapReady(GoogleMap googleMap)
     {
+        // We have to wait for the map to load, because you can't zoom to include a set of points until the map has been layed out
         googleMap.setOnMapLoadedCallback(() -> updatePins(googleMap));
     }
 
@@ -650,7 +651,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
             {
                 continue;
             }
-
 
 
             MarkerOptions opts = new MarkerOptions()
@@ -689,7 +689,6 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
 
         map.animateCamera(update);
     }
-
 
     public void incrementValue(View view)
     {

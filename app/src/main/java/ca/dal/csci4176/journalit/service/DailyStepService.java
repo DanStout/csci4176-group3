@@ -44,10 +44,9 @@ public class DailyStepService extends IntentService
         AlarmManager mgr = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
 
         LocalDateTime time = LocalDateTime.now().plusSeconds(30);
-//        LocalDateTime time = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT.minusMinutes(15));
         Timber.d("Setting alarm for %s", time);
         long millisTriggerAt = time.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        mgr.setInexactRepeating(AlarmManager.RTC, millisTriggerAt, AlarmManager.INTERVAL_DAY, pin);
+        mgr.setInexactRepeating(AlarmManager.RTC, millisTriggerAt, AlarmManager.INTERVAL_HOUR, pin);
     }
 
     @Override
