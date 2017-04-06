@@ -36,7 +36,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.jmedeisis.draglinearlayout.DragLinearLayout;
 
 import org.threeten.bp.LocalDateTime;
-import org.threeten.bp.LocalTime;
 import org.threeten.bp.format.DateTimeFormatter;
 
 import java.io.File;
@@ -54,7 +53,6 @@ import ca.dal.csci4176.journalit.models.Mood;
 import ca.dal.csci4176.journalit.models.MoodItem;
 import ca.dal.csci4176.journalit.service.LocationGetter;
 import ca.dal.csci4176.journalit.utils.BitmapUtils;
-import ca.dal.csci4176.journalit.utils.DateUtils;
 import ca.dal.csci4176.journalit.utils.ViewUtils;
 import ca.dal.csci4176.journalit.views.BulletItemView;
 import ca.dal.csci4176.journalit.views.CheckboxItemView;
@@ -214,7 +212,10 @@ public class DailyEntryActivity extends AppCompatActivity implements OnMapReadyC
     }
 
     /**
-     * http://stackoverflow.com/a/17317176/2513761
+     * Adapted from http://stackoverflow.com/a/17317176/2513761
+     * Author: Laksh
+     * Created: 2013-06-13
+     * Accessed: 2017-04-03
      */
     private void enableMapHack()
     {
